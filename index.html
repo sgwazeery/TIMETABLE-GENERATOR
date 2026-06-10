@@ -3,99 +3,1767 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Automated Timetable Generator</title>
-  <!-- Tailwind CSS via CDN -->
+  <title>NexSchedule — AI Timetable Generator</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
       darkMode: 'class',
-      theme: { extend: {} }
-    }
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50:  '#eff6ff',
+              100: '#dbeafe',
+              400: '#60a5fa',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              800: '#1e40af',
+              900: '#1e3a8a',
+            },
+            surface: {
+              50:  '#f8fafc',
+              100: '#f1f5f9',
+              200: '#e2e8f0',
+              700: '#334155',
+              800: '#1e293b',
+              900: '#0f172a',
+              950: '#080f1e',
+            },
+            accent: {
+              cyan:   '#06b6d4',
+              violet: '#8b5cf6',
+              emerald:'#10b981',
+            }
+          },
+          fontFamily: {
+            sans: ['-apple-system','BlinkMacSystemFont','Inter','Segoe UI','sans-serif'],
+          },
+          boxShadow: {
+            glow:  '0 0 20px rgba(59,130,246,0.35)',
+            card:  '0 4px 24px rgba(0,0,0,0.45)',
+          },
+          animation: {
+            'fade-in':    'fadeIn 0.25s ease-out',
+            'slide-in':   'slideIn 0.3s ease-out',
+            'pulse-slow': 'pulse 3s ease-in-out infinite',
+          },
+          keyframes: {
+            fadeIn:  { from: {opacity:'0', transform:'translateY(8px)'}, to: {opacity:'1', transform:'translateY(0)'} },
+            slideIn: { from: {opacity:'0', transform:'translateX(-12px)'}, to: {opacity:'1', transform:'translateX(0)'} },
+          }
+        }
+      }
+    };
   </script>
-  <!-- Font Awesome -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <style>
-    :root {
-      color-scheme: dark;
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    *,*::before,*::after{box-sizing:border-box}
+    :root{
+      --sidebar-w:260px;
+      --sidebar-collapsed:72px;
+      --header-h:60px;
+      --radius:10px;
+      --bg:       #0f172a;
+      --surface:  #1e293b;
+      --surface2: #263348;
+      --border:   rgba(255,255,255,0.07);
+      --border2:  rgba(255,255,255,0.12);
+      --text:     #f1f5f9;
+      --muted:    #94a3b8;
+      --primary:  #3b82f6;
+      --primary-d:#1d4ed8;
+      --cyan:     #06b6d4;
+      --violet:   #8b5cf6;
+      --emerald:  #10b981;
+      --red:      #ef4444;
+      --amber:    #f59e0b;
     }
-    body {
-      min-height: 100vh;
-      margin: 0;
-      background: radial-gradient(circle at top left, rgba(59, 130, 246, 0.16), transparent 30%),
-                  radial-gradient(circle at bottom right, rgba(16, 185, 129, 0.14), transparent 28%),
-                  linear-gradient(180deg, #020617 0%, #111827 100%);
-      color: #e2e8f0;
-      background-attachment: fixed;
+    html,body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',sans-serif;margin:0;padding:0;min-height:100vh}
+    /* Scrollbar */
+    ::-webkit-scrollbar{width:5px;height:5px}
+    ::-webkit-scrollbar-track{background:transparent}
+    ::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:99px}
+    ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,0.28)}
+    /* Glass panel */
+    .glass{background:rgba(30,41,59,0.7);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid var(--border2)}
+    /* Card */
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:0 4px 24px rgba(0,0,0,0.4)}
+    /* Inputs */
+    .input{
+      display:flex;height:42px;width:100%;border-radius:8px;
+      border:1px solid var(--border2);background:rgba(255,255,255,0.05);
+      padding:0 12px;font-size:14px;color:var(--text);outline:none;
+      transition:border-color .15s,box-shadow .15s;
     }
-    .sidebar::-webkit-scrollbar { width: 6px; }
-    .sidebar::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.7); border-radius: 9999px; }
-    .dark .sidebar::-webkit-scrollbar-thumb { background: rgba(100, 116, 139, 0.8); }
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 9999px;
-      font-size: 0.95rem;
-      font-weight: 700;
-      transition: all 0.2s ease;
-      box-shadow: 0 12px 24px rgba(15, 23, 42, 0.12);
-      border: 1px solid transparent;
-      cursor: pointer;
+    .input::placeholder{color:var(--muted)}
+    .input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(59,130,246,0.2)}
+    select.input{appearance:none;cursor:pointer}
+    textarea.input{height:auto;padding:10px 12px;resize:vertical}
+    /* Buttons */
+    .btn{
+      display:inline-flex;align-items:center;justify-content:center;gap:6px;
+      height:38px;padding:0 16px;border-radius:8px;font-size:14px;font-weight:500;
+      cursor:pointer;border:none;transition:all .15s;white-space:nowrap;
     }
-    .btn-primary {
-      background: linear-gradient(135deg, #2563eb, #0ea5e9);
-      color: #ffffff;
-    }
-    .btn-primary:hover {
-      transform: translateY(-1px);
-      background: linear-gradient(135deg, #1d4ed8, #0284c7);
-    }
-    .btn-secondary {
-      background: rgba(255,255,255,0.08);
-      color: #cbd5e1;
-      border-color: rgba(148, 163, 184, 0.2);
-    }
-    .btn-secondary:hover {
-      background: rgba(255,255,255,0.12);
-    }
-    .btn-danger {
-      background: linear-gradient(135deg, #ef4444, #dc2626);
-      color: white;
-    }
-    .input {
-      width: 100%;
-      min-height: 44px;
-      border-radius: 16px;
-      border: 1px solid rgba(148, 163, 184, 0.24);
-      background: rgba(15, 23, 42, 0.82);
-      padding: 0.85rem 1rem;
-      color: #e2e8f0;
-      outline: none;
-      transition: border-color 0.2s ease, box-shadow 0.2s ease;
-    }
-    .input:focus {
-      border-color: rgba(59, 130, 246, 0.65);
-      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
-    }
-    .card {
-      border-radius: 32px;
-      border: 1px solid rgba(148, 163, 184, 0.16);
-      background: rgba(15, 23, 42, 0.88);
-      box-shadow: 0 35px 80px rgba(15, 23, 42, 0.24);
-      backdrop-filter: blur(18px);
-    }
-    .section-title {
-      letter-spacing: -0.03em;
-      line-height: 1.1;
-    }
+    .btn:disabled{opacity:.5;cursor:not-allowed}
+    .btn-primary{background:linear-gradient(135deg,var(--primary),var(--primary-d));color:#fff}
+    .btn-primary:not(:disabled):hover{background:linear-gradient(135deg,#60a5fa,var(--primary));box-shadow:0 0 20px rgba(59,130,246,0.4)}
+    .btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border2)}
+    .btn-secondary:not(:disabled):hover{background:rgba(255,255,255,0.1)}
+    .btn-danger{background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff}
+    .btn-danger:not(:disabled):hover{box-shadow:0 0 16px rgba(239,68,68,0.4)}
+    .btn-ghost{background:transparent;color:var(--muted);padding:0 8px}
+    .btn-ghost:hover{color:var(--text);background:rgba(255,255,255,0.06)}
+    .btn-sm{height:32px;padding:0 12px;font-size:13px;border-radius:6px}
+    .btn-icon{width:36px;height:36px;padding:0;border-radius:8px}
+    /* Badge */
+    .badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;letter-spacing:.03em}
+    .badge-blue{background:rgba(59,130,246,0.15);color:#60a5fa;border:1px solid rgba(59,130,246,0.3)}
+    .badge-green{background:rgba(16,185,129,0.15);color:#34d399;border:1px solid rgba(16,185,129,0.3)}
+    .badge-amber{background:rgba(245,158,11,0.15);color:#fbbf24;border:1px solid rgba(245,158,11,0.3)}
+    .badge-red{background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.3)}
+    .badge-purple{background:rgba(139,92,246,0.15);color:#a78bfa;border:1px solid rgba(139,92,246,0.3)}
+    /* Table */
+    .tbl{width:100%;border-collapse:collapse}
+    .tbl th{padding:10px 14px;text-align:left;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border)}
+    .tbl td{padding:12px 14px;font-size:14px;border-bottom:1px solid rgba(255,255,255,0.04)}
+    .tbl tr:hover td{background:rgba(255,255,255,0.025)}
+    .tbl tr:last-child td{border-bottom:none}
+    /* Modal */
+    .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px}
+    .modal{background:var(--surface);border:1px solid var(--border2);border-radius:14px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,0.6);animation:fadeIn .2s ease-out}
+    .modal-header{padding:20px 24px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+    .modal-body{padding:20px 24px}
+    .modal-footer{padding:16px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
+    /* Toast */
+    .toast{display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:10px;font-size:14px;backdrop-filter:blur(12px);border:1px solid;min-width:280px;max-width:380px;box-shadow:0 8px 24px rgba(0,0,0,0.4);animation:fadeIn .2s ease-out}
+    .toast-success{background:rgba(16,185,129,0.15);border-color:rgba(16,185,129,0.4);color:#34d399}
+    .toast-error{background:rgba(239,68,68,0.15);border-color:rgba(239,68,68,0.4);color:#f87171}
+    .toast-info{background:rgba(59,130,246,0.15);border-color:rgba(59,130,246,0.4);color:#60a5fa}
+    /* Sidebar */
+    .sidebar{width:var(--sidebar-w);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;transition:width .25s ease;overflow:hidden;flex-shrink:0}
+    .sidebar.collapsed{width:var(--sidebar-collapsed)}
+    .nav-item{display:flex;align-items:center;gap:10px;padding:9px 14px;border-radius:8px;margin:2px 8px;font-size:14px;font-weight:500;color:var(--muted);cursor:pointer;text-decoration:none;transition:all .15s;white-space:nowrap;overflow:hidden}
+    .nav-item:hover{color:var(--text);background:rgba(255,255,255,0.06)}
+    .nav-item.active{color:#fff;background:linear-gradient(135deg,rgba(59,130,246,0.25),rgba(139,92,246,0.15));border:1px solid rgba(59,130,246,0.3)}
+    .nav-item .nav-icon{width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px}
+    .nav-section{padding:16px 22px 6px;font-size:10px;font-weight:700;letter-spacing:.1em;color:rgba(148,163,184,0.5);text-transform:uppercase}
+    /* Stat card */
+    .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;position:relative;overflow:hidden;transition:transform .15s,box-shadow .15s}
+    .stat-card:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,0,0,0.4)}
+    .stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:12px 12px 0 0}
+    .stat-card.blue::before{background:linear-gradient(90deg,var(--primary),var(--cyan))}
+    .stat-card.violet::before{background:linear-gradient(90deg,var(--violet),#ec4899)}
+    .stat-card.emerald::before{background:linear-gradient(90deg,var(--emerald),#06b6d4)}
+    .stat-card.amber::before{background:linear-gradient(90deg,var(--amber),#f97316)}
+    /* Gradient text */
+    .gradient-text{background:linear-gradient(135deg,#60a5fa,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    /* Timetable grid */
+    .tt-cell{min-width:130px;height:72px;border:1px solid rgba(255,255,255,0.06);padding:4px;transition:background .15s;position:relative}
+    .tt-cell:hover{background:rgba(255,255,255,0.03)}
+    .tt-slot{background:linear-gradient(135deg,rgba(59,130,246,0.2),rgba(139,92,246,0.15));border:1px solid rgba(59,130,246,0.3);border-radius:6px;padding:6px 8px;cursor:move;height:100%;display:flex;flex-direction:column;justify-content:space-between;font-size:12px;transition:all .15s}
+    .tt-slot:hover{border-color:rgba(59,130,246,0.6);box-shadow:0 0 12px rgba(59,130,246,0.2)}
+    /* Loading spinner */
+    .spinner{width:20px;height:20px;border:2px solid rgba(255,255,255,0.15);border-top-color:var(--primary);border-radius:50%;animation:spin .7s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    /* Auth page */
+    .auth-bg{min-height:100vh;background:radial-gradient(ellipse at 20% 50%,rgba(59,130,246,0.12) 0%,transparent 55%),radial-gradient(ellipse at 80% 20%,rgba(139,92,246,0.1) 0%,transparent 50%),var(--bg)}
+    .auth-card{background:rgba(30,41,59,0.8);backdrop-filter:blur(20px);border:1px solid var(--border2);border-radius:16px;padding:40px;width:100%;max-width:420px;box-shadow:0 24px 60px rgba(0,0,0,0.5)}
+    /* Form group */
+    .form-group{display:flex;flex-direction:column;gap:6px}
+    .form-label{font-size:13px;font-weight:500;color:var(--muted)}
+    /* Pagination */
+    .page-btn{width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;border-radius:6px;font-size:13px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted);transition:all .15s}
+    .page-btn:hover,.page-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+    /* Section header */
+    .section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+    .section-title{font-size:22px;font-weight:700;color:var(--text)}
+    /* Divider */
+    .divider{height:1px;background:var(--border);margin:16px 0}
+    /* Glow ring on cards */
+    .glow-ring{box-shadow:0 0 0 1px rgba(59,130,246,0.2),0 4px 24px rgba(0,0,0,0.4)}
+    /* Empty state */
+    .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;color:var(--muted);text-align:center}
+    /* Loader line */
+    @keyframes loader{0%{left:-40%}100%{left:100%}}
+    .loader-bar{height:2px;background:var(--surface);border-radius:99px;overflow:hidden;position:relative}
+    .loader-bar::after{content:'';position:absolute;top:0;left:-40%;width:40%;height:100%;background:linear-gradient(90deg,var(--primary),var(--cyan));animation:loader 1.2s linear infinite}
   </style>
 </head>
-<body style="margin:0; padding:0;">
-  <div id="root" style="width:100vw;height:100vh;display:flex;align-items:center;justify-content:center;">
-    <div style="color:#e2e8f0;font-family:system-ui,sans-serif;">Loading Timetable Generator...</div>
-  </div>
+<body>
+  <div id="root"></div>
 
-  <script type="module" src="/app.js"></script>
+  <script type="importmap">
+  {
+    "imports": {
+      "react": "https://esm.sh/react@18.2.0",
+      "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+      "react-router-dom": "https://esm.sh/react-router-dom@6.20.0",
+      "recharts": "https://esm.sh/recharts@2.10.3",
+      "jspdf": "https://esm.sh/jspdf@2.5.1",
+      "html2canvas": "https://esm.sh/html2canvas@1.4.1",
+      "@tanstack/react-query": "https://esm.sh/@tanstack/react-query@5.17.19",
+      "zustand": "https://esm.sh/zustand@4.4.7"
+    }
+  }
+  </script>
+
+  <script type="module">
+    import React, { useState, useEffect, useContext, createContext, useRef, useCallback, useMemo } from 'react';
+    import { createRoot } from 'react-dom/client';
+    import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useLocation, Navigate, useParams } from 'react-router-dom';
+    import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+    import { QueryClient, QueryClientProvider, useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+    import { create } from 'zustand';
+
+    // ---------- Constants ----------
+    const API_BASE = window.location.origin + '/api';
+    const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday'];
+    const CHART_COLORS = ['#3b82f6','#8b5cf6','#06b6d4','#10b981','#f59e0b','#ef4444','#ec4899','#84cc16'];
+
+    // ---------- Zustand Store ----------
+    const useStore = create((set, get) => ({
+      user: null,
+      token: localStorage.getItem('token') || null,
+      login: (token, userData) => { localStorage.setItem('token', token); set({ token, user: userData }); },
+      logout: () => { localStorage.removeItem('token'); set({ token: null, user: null }); },
+      setUser: (user) => set({ user }),
+    }));
+
+    // ---------- Query Client ----------
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { staleTime: 60000, retry: 1, refetchOnWindowFocus: false } }
+    });
+
+    // ---------- API helper ----------
+    function useAuthApi() {
+      const token = useStore(s => s.token);
+      const logout = useStore(s => s.logout);
+      return useCallback(async (url, options = {}) => {
+        const headers = { 'Content-Type': 'application/json', ...options.headers };
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+        const res = await fetch(`${API_BASE}${url}`, { ...options, headers });
+        if (res.status === 401) { logout(); throw new Error('Session expired'); }
+        if (!res.ok) {
+          let err;
+          try { err = await res.json(); } catch { err = { msg: 'Request failed' }; }
+          throw new Error(err.msg || 'Error');
+        }
+        // Handle empty responses (204 etc.)
+        const text = await res.text();
+        return text ? JSON.parse(text) : {};
+      }, [token, logout]);
+    }
+
+    // ---------- Toast ----------
+    const ToastCtx = createContext();
+    function ToastProvider({ children }) {
+      const [toasts, setToasts] = useState([]);
+      const add = (msg, type = 'info') => {
+        const id = Date.now() + Math.random();
+        setToasts(p => [...p, { id, msg, type }]);
+        setTimeout(() => setToasts(p => p.filter(t => t.id !== id)), 4500);
+      };
+      const icons = { success: 'fa-check-circle', error: 'fa-exclamation-circle', info: 'fa-info-circle' };
+      return (
+        <ToastCtx.Provider value={{ addToast: add }}>
+          {children}
+          <div style={{position:'fixed',top:'16px',right:'16px',zIndex:9999,display:'flex',flexDirection:'column',gap:'8px',pointerEvents:'none'}}>
+            {toasts.map(t => (
+              <div key={t.id} className={`toast toast-${t.type}`} style={{pointerEvents:'auto'}}>
+                <i className={`fas ${icons[t.type] || icons.info}`}></i>
+                <span>{t.msg}</span>
+              </div>
+            ))}
+          </div>
+        </ToastCtx.Provider>
+      );
+    }
+    function useToast() { return useContext(ToastCtx); }
+
+    // ---------- Protected Route ----------
+    function ProtectedRoute({ children, roles }) {
+      const { user, token, logout, setUser } = useStore(s => s);
+      const location = useLocation();
+      const [loading, setLoading] = useState(!user && !!token);
+
+      useEffect(() => {
+        if (!token) { setLoading(false); return; }
+        if (user) { setLoading(false); return; }
+        fetch(`${API_BASE}/auth/me`, { headers: { Authorization: `Bearer ${token}` } })
+          .then(r => r.ok ? r.json() : Promise.reject())
+          .then(d => { setUser(d.user); setLoading(false); })
+          .catch(() => { logout(); setLoading(false); });
+      }, [token]);
+
+      if (loading) return (
+        <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',flexDirection:'column',gap:'16px',background:'var(--bg)'}}>
+          <div className="spinner" style={{width:'36px',height:'36px',borderWidth:'3px'}}></div>
+          <span style={{color:'var(--muted)',fontSize:'14px'}}>Authenticating...</span>
+        </div>
+      );
+      if (!token || !user) return <Navigate to="/login" state={{ from: location }} replace />;
+      if (roles && !roles.includes(user.role)) return (
+        <div className="empty-state">
+          <i className="fas fa-lock fa-2x" style={{marginBottom:'12px',color:'var(--muted)'}}></i>
+          <p style={{fontSize:'18px',fontWeight:'600'}}>Access Denied</p>
+          <p style={{fontSize:'14px',marginTop:'6px'}}>You don't have permission to view this page.</p>
+        </div>
+      );
+      return children;
+    }
+
+    // ===========================
+    // AUTH PAGES
+    // ===========================
+
+    function LoginPage() {
+      const [email, setEmail] = useState('');
+      const [password, setPassword] = useState('');
+      const [error, setError] = useState('');
+      const [loading, setLoading] = useState(false);
+      const [showPwd, setShowPwd] = useState(false);
+      const login = useStore(s => s.login);
+      const navigate = useNavigate();
+      const { addToast } = useToast();
+
+      const handleSubmit = async (e) => {
+        e.preventDefault();
+        setError(''); setLoading(true);
+        try {
+          const res = await fetch(`${API_BASE}/auth/login`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.msg || 'Login failed');
+          login(data.access_token, data.user);
+          addToast('Welcome back!', 'success');
+          navigate('/dashboard');
+        } catch (err) { setError(err.message); }
+        finally { setLoading(false); }
+      };
+
+      return (
+        <div className="auth-bg" style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:'100vh',padding:'20px'}}>
+          <div style={{width:'100%',maxWidth:'420px'}}>
+            {/* Logo */}
+            <div style={{textAlign:'center',marginBottom:'32px'}}>
+              <div style={{width:'52px',height:'52px',background:'linear-gradient(135deg,#3b82f6,#8b5cf6)',borderRadius:'14px',display:'inline-flex',alignItems:'center',justifyContent:'center',marginBottom:'16px',boxShadow:'0 8px 24px rgba(59,130,246,0.4)'}}>
+                <i className="fas fa-brain" style={{fontSize:'24px',color:'#fff'}}></i>
+              </div>
+              <h1 style={{fontSize:'26px',fontWeight:'700',margin:'0 0 6px'}} className="gradient-text">NexSchedule</h1>
+              <p style={{color:'var(--muted)',fontSize:'14px'}}>AI-Powered Academic Timetable Generator</p>
+            </div>
+
+            <div className="auth-card">
+              <h2 style={{fontSize:'20px',fontWeight:'700',marginBottom:'6px'}}>Sign in</h2>
+              <p style={{color:'var(--muted)',fontSize:'13px',marginBottom:'24px'}}>Enter your credentials to continue</p>
+
+              {error && (
+                <div style={{background:'rgba(239,68,68,0.12)',border:'1px solid rgba(239,68,68,0.3)',borderRadius:'8px',padding:'10px 14px',marginBottom:'16px',fontSize:'13px',color:'#f87171',display:'flex',gap:'8px',alignItems:'center'}}>
+                  <i className="fas fa-exclamation-circle"></i> {error}
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit} style={{display:'flex',flexDirection:'column',gap:'16px'}}>
+                <div className="form-group">
+                  <label className="form-label">Email address</label>
+                  <input type="email" value={email} onChange={e => setEmail(e.target.value)} required className="input" placeholder="you@example.com" autoComplete="email" />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Password</label>
+                  <div style={{position:'relative'}}>
+                    <input type={showPwd?'text':'password'} value={password} onChange={e => setPassword(e.target.value)} required className="input" placeholder="••••••••" style={{paddingRight:'42px'}} autoComplete="current-password" />
+                    <button type="button" onClick={() => setShowPwd(!showPwd)} style={{position:'absolute',right:'12px',top:'50%',transform:'translateY(-50%)',background:'none',border:'none',color:'var(--muted)',cursor:'pointer',fontSize:'14px'}}>
+                      <i className={`fas fa-${showPwd?'eye-slash':'eye'}`}></i>
+                    </button>
+                  </div>
+                </div>
+                <div style={{display:'flex',justifyContent:'flex-end',marginTop:'-8px'}}>
+                  <Link to="/forgot-password" style={{fontSize:'13px',color:'var(--primary)',textDecoration:'none'}}>Forgot password?</Link>
+                </div>
+                <button type="submit" className="btn btn-primary" style={{height:'44px',fontSize:'15px',width:'100%',marginTop:'4px'}} disabled={loading}>
+                  {loading ? <><div className="spinner" style={{width:'16px',height:'16px'}}></div> Signing in...</> : 'Sign in'}
+                </button>
+              </form>
+
+              <div style={{marginTop:'20px',textAlign:'center',fontSize:'13px',color:'var(--muted)'}}>
+                Don't have an account?{' '}
+                <Link to="/register" style={{color:'var(--primary)',textDecoration:'none',fontWeight:'500'}}>Create one</Link>
+              </div>
+
+              <div style={{marginTop:'20px',padding:'12px',background:'rgba(59,130,246,0.08)',border:'1px solid rgba(59,130,246,0.2)',borderRadius:'8px',fontSize:'12px',color:'var(--muted)'}}>
+                <i className="fas fa-shield-alt" style={{marginRight:'6px',color:'var(--primary)'}}></i>
+                Default admin: <strong style={{color:'var(--text)'}}>admin@timetable.com</strong> / <strong style={{color:'var(--text)'}}>Admin@123</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function RegisterPage() {
+      const [form, setForm] = useState({ email:'', password:'', first_name:'', last_name:'' });
+      const [error, setError] = useState('');
+      const [loading, setLoading] = useState(false);
+      const [showPwd, setShowPwd] = useState(false);
+      const navigate = useNavigate();
+      const { addToast } = useToast();
+      const update = f => v => setForm(p => ({ ...p, [f]: v }));
+
+      const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (form.password.length < 6) { setError('Password must be at least 6 characters'); return; }
+        setError(''); setLoading(true);
+        try {
+          const res = await fetch(`${API_BASE}/auth/register`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(form)
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.msg || 'Registration failed');
+          addToast('Account created successfully! Please sign in.', 'success');
+          navigate('/login');
+        } catch (err) { setError(err.message); }
+        finally { setLoading(false); }
+      };
+
+      return (
+        <div className="auth-bg" style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:'100vh',padding:'20px'}}>
+          <div style={{width:'100%',maxWidth:'420px'}}>
+            <div style={{textAlign:'center',marginBottom:'28px'}}>
+              <div style={{width:'52px',height:'52px',background:'linear-gradient(135deg,#3b82f6,#8b5cf6)',borderRadius:'14px',display:'inline-flex',alignItems:'center',justifyContent:'center',marginBottom:'14px',boxShadow:'0 8px 24px rgba(59,130,246,0.4)'}}>
+                <i className="fas fa-brain" style={{fontSize:'24px',color:'#fff'}}></i>
+              </div>
+              <h1 className="gradient-text" style={{fontSize:'24px',fontWeight:'700',margin:'0 0 4px'}}>NexSchedule</h1>
+            </div>
+
+            <div className="auth-card">
+              <h2 style={{fontSize:'20px',fontWeight:'700',marginBottom:'6px'}}>Create account</h2>
+              <p style={{color:'var(--muted)',fontSize:'13px',marginBottom:'24px'}}>Join NexSchedule today</p>
+
+              {error && (
+                <div style={{background:'rgba(239,68,68,0.12)',border:'1px solid rgba(239,68,68,0.3)',borderRadius:'8px',padding:'10px 14px',marginBottom:'16px',fontSize:'13px',color:'#f87171',display:'flex',gap:'8px',alignItems:'center'}}>
+                  <i className="fas fa-exclamation-circle"></i> {error}
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit} style={{display:'flex',flexDirection:'column',gap:'14px'}}>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'12px'}}>
+                  <div className="form-group">
+                    <label className="form-label">First name</label>
+                    <input value={form.first_name} onChange={e => update('first_name')(e.target.value)} className="input" placeholder="John" />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Last name</label>
+                    <input value={form.last_name} onChange={e => update('last_name')(e.target.value)} className="input" placeholder="Doe" />
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Email address</label>
+                  <input type="email" required value={form.email} onChange={e => update('email')(e.target.value)} className="input" placeholder="you@example.com" />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Password</label>
+                  <div style={{position:'relative'}}>
+                    <input type={showPwd?'text':'password'} required value={form.password} onChange={e => update('password')(e.target.value)} className="input" placeholder="Min. 6 characters" style={{paddingRight:'42px'}} />
+                    <button type="button" onClick={() => setShowPwd(!showPwd)} style={{position:'absolute',right:'12px',top:'50%',transform:'translateY(-50%)',background:'none',border:'none',color:'var(--muted)',cursor:'pointer'}}>
+                      <i className={`fas fa-${showPwd?'eye-slash':'eye'}`}></i>
+                    </button>
+                  </div>
+                </div>
+                <button type="submit" className="btn btn-primary" style={{height:'44px',fontSize:'15px',width:'100%',marginTop:'4px'}} disabled={loading}>
+                  {loading ? <><div className="spinner" style={{width:'16px',height:'16px'}}></div> Creating...</> : 'Create account'}
+                </button>
+              </form>
+              <div style={{marginTop:'18px',textAlign:'center',fontSize:'13px',color:'var(--muted)'}}>
+                Already have an account?{' '}
+                <Link to="/login" style={{color:'var(--primary)',textDecoration:'none',fontWeight:'500'}}>Sign in</Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function ForgotPasswordPage() {
+      const [email, setEmail] = useState('');
+      const [result, setResult] = useState(null);
+      const [loading, setLoading] = useState(false);
+      const { addToast } = useToast();
+
+      const handleSubmit = async (e) => {
+        e.preventDefault(); setLoading(true);
+        try {
+          const res = await fetch(`${API_BASE}/auth/forgot-password`, {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ email })
+          });
+          const data = await res.json();
+          setResult(data);
+          addToast('Reset link generated.', 'success');
+        } catch (err) { addToast(err.message, 'error'); }
+        finally { setLoading(false); }
+      };
+
+      return (
+        <div className="auth-bg" style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:'100vh',padding:'20px'}}>
+          <div className="auth-card" style={{maxWidth:'420px',width:'100%'}}>
+            <Link to="/login" style={{display:'inline-flex',alignItems:'center',gap:'6px',color:'var(--muted)',fontSize:'13px',textDecoration:'none',marginBottom:'20px'}}>
+              <i className="fas fa-arrow-left"></i> Back to sign in
+            </Link>
+            <h2 style={{fontSize:'20px',fontWeight:'700',marginBottom:'6px'}}>Reset password</h2>
+            <p style={{color:'var(--muted)',fontSize:'13px',marginBottom:'24px'}}>Enter your email to receive a reset link.</p>
+            {result ? (
+              <div>
+                <div style={{background:'rgba(16,185,129,0.12)',border:'1px solid rgba(16,185,129,0.3)',borderRadius:'8px',padding:'14px',marginBottom:'16px',fontSize:'13px',color:'#34d399'}}>
+                  <i className="fas fa-check-circle" style={{marginRight:'8px'}}></i>
+                  {result.msg}
+                </div>
+                {result.reset_token && (
+                  <div style={{background:'rgba(59,130,246,0.08)',border:'1px solid rgba(59,130,246,0.2)',borderRadius:'8px',padding:'14px'}}>
+                    <p style={{fontSize:'12px',color:'var(--muted)',marginBottom:'8px'}}>Your reset token (use this to reset your password):</p>
+                    <code style={{fontSize:'11px',color:'#60a5fa',wordBreak:'break-all',display:'block'}}>{result.reset_token}</code>
+                    <Link to={`/reset-password/${result.reset_token}`} className="btn btn-primary btn-sm" style={{marginTop:'12px',width:'100%',justifyContent:'center'}}>
+                      Reset Password Now
+                    </Link>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} style={{display:'flex',flexDirection:'column',gap:'16px'}}>
+                <div className="form-group">
+                  <label className="form-label">Email address</label>
+                  <input type="email" required value={email} onChange={e => setEmail(e.target.value)} className="input" placeholder="you@example.com" />
+                </div>
+                <button type="submit" className="btn btn-primary" style={{height:'44px',width:'100%'}} disabled={loading}>
+                  {loading ? <><div className="spinner" style={{width:'16px',height:'16px'}}></div> Sending...</> : 'Get reset link'}
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    function ResetPasswordPage() {
+      const { token } = useParams();
+      const [password, setPassword] = useState('');
+      const [done, setDone] = useState(false);
+      const [loading, setLoading] = useState(false);
+      const [showPwd, setShowPwd] = useState(false);
+      const { addToast } = useToast();
+
+      const handleSubmit = async (e) => {
+        e.preventDefault(); setLoading(true);
+        try {
+          const res = await fetch(`${API_BASE}/auth/reset-password/${token}`, {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ password })
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.msg);
+          setDone(true);
+          addToast('Password reset successful.', 'success');
+        } catch (err) { addToast(err.message, 'error'); }
+        finally { setLoading(false); }
+      };
+
+      return (
+        <div className="auth-bg" style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:'100vh',padding:'20px'}}>
+          <div className="auth-card" style={{maxWidth:'420px',width:'100%'}}>
+            <h2 style={{fontSize:'20px',fontWeight:'700',marginBottom:'6px'}}>Set new password</h2>
+            <p style={{color:'var(--muted)',fontSize:'13px',marginBottom:'24px'}}>Choose a strong password for your account.</p>
+            {done ? (
+              <div>
+                <div style={{background:'rgba(16,185,129,0.12)',border:'1px solid rgba(16,185,129,0.3)',borderRadius:'8px',padding:'14px',marginBottom:'16px',fontSize:'13px',color:'#34d399'}}>
+                  <i className="fas fa-check-circle" style={{marginRight:'8px'}}></i> Password reset successfully!
+                </div>
+                <Link to="/login" className="btn btn-primary" style={{width:'100%',justifyContent:'center'}}>Sign in now</Link>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} style={{display:'flex',flexDirection:'column',gap:'16px'}}>
+                <div className="form-group">
+                  <label className="form-label">New password</label>
+                  <div style={{position:'relative'}}>
+                    <input type={showPwd?'text':'password'} required value={password} onChange={e => setPassword(e.target.value)} className="input" placeholder="Min. 6 characters" style={{paddingRight:'42px'}} />
+                    <button type="button" onClick={() => setShowPwd(!showPwd)} style={{position:'absolute',right:'12px',top:'50%',transform:'translateY(-50%)',background:'none',border:'none',color:'var(--muted)',cursor:'pointer'}}>
+                      <i className={`fas fa-${showPwd?'eye-slash':'eye'}`}></i>
+                    </button>
+                  </div>
+                </div>
+                <button type="submit" className="btn btn-primary" style={{height:'44px',width:'100%'}} disabled={loading}>
+                  {loading ? <><div className="spinner" style={{width:'16px',height:'16px'}}></div> Resetting...</> : 'Reset password'}
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // ===========================
+    // DASHBOARD LAYOUT
+    // ===========================
+    const NAV_GROUPS = [
+      {
+        label: 'Overview',
+        items: [
+          { to:'/dashboard', icon:'fa-chart-line', label:'Dashboard', roles:['super_admin','institution_admin','hod'] },
+        ]
+      },
+      {
+        label: 'Administration',
+        items: [
+          { to:'/admin/institutions', icon:'fa-university', label:'Institutions', roles:['super_admin'] },
+          { to:'/admin/users', icon:'fa-users', label:'Users', roles:['super_admin','institution_admin'] },
+          { to:'/audit-logs', icon:'fa-history', label:'Audit Logs', roles:['super_admin'] },
+        ]
+      },
+      {
+        label: 'Academic Structure',
+        items: [
+          { to:'/faculties', icon:'fa-building-columns', label:'Faculties', roles:['super_admin','institution_admin'] },
+          { to:'/departments', icon:'fa-sitemap', label:'Departments', roles:['super_admin','institution_admin'] },
+          { to:'/programmes', icon:'fa-graduation-cap', label:'Programmes', roles:['super_admin','institution_admin'] },
+          { to:'/sessions', icon:'fa-calendar-days', label:'Sessions', roles:['super_admin','institution_admin'] },
+          { to:'/semesters', icon:'fa-calendar-week', label:'Semesters', roles:['super_admin','institution_admin'] },
+        ]
+      },
+      {
+        label: 'Scheduling',
+        items: [
+          { to:'/courses', icon:'fa-book-open', label:'Courses', roles:['super_admin','institution_admin','hod'] },
+          { to:'/lecturers', icon:'fa-chalkboard-user', label:'Lecturers', roles:['super_admin','institution_admin'] },
+          { to:'/venues', icon:'fa-door-open', label:'Venues', roles:['super_admin','institution_admin'] },
+          { to:'/timetable/generate', icon:'fa-wand-magic-sparkles', label:'Generate', roles:['super_admin','institution_admin','hod'] },
+          { to:'/timetable/view', icon:'fa-table-cells', label:'Timetable', roles:['super_admin','institution_admin','hod','lecturer','student'] },
+        ]
+      },
+      {
+        label: 'Reports',
+        items: [
+          { to:'/reports', icon:'fa-chart-bar', label:'Reports', roles:['super_admin','institution_admin'] },
+          { to:'/notifications', icon:'fa-bell', label:'Notifications', roles:['super_admin','institution_admin','hod','lecturer','student'] },
+        ]
+      }
+    ];
+
+    function DashboardLayout({ children }) {
+      const { user, logout } = useStore(s => s);
+      const [collapsed, setCollapsed] = useState(false);
+      const [notifOpen, setNotifOpen] = useState(false);
+      const location = useLocation();
+      const navigate = useNavigate();
+      const fetchWithAuth = useAuthApi();
+
+      const { data: notifications = [] } = useQuery({
+        queryKey: ['notifications'],
+        queryFn: () => fetchWithAuth('/notifications').catch(() => []),
+        refetchInterval: 30000,
+        enabled: !!user
+      });
+      const unread = notifications.filter(n => !n.is_read).length;
+
+      const filteredGroups = useMemo(() => {
+        return NAV_GROUPS.map(g => ({
+          ...g,
+          items: g.items.filter(i => i.roles.includes(user?.role))
+        })).filter(g => g.items.length > 0);
+      }, [user]);
+
+      const roleLabel = {
+        super_admin: 'Super Admin', institution_admin: 'Admin',
+        hod: 'HOD', lecturer: 'Lecturer', student: 'Student'
+      };
+
+      return (
+        <div style={{display:'flex',height:'100vh',overflow:'hidden'}}>
+          {/* Sidebar */}
+          <aside className={`sidebar ${collapsed?'collapsed':''}`} style={{overflowY:'auto',overflowX:'hidden'}}>
+            {/* Logo */}
+            <div style={{padding:'16px 14px',display:'flex',alignItems:'center',gap:'10px',borderBottom:'1px solid var(--border)'}}>
+              <div style={{width:'36px',height:'36px',background:'linear-gradient(135deg,#3b82f6,#8b5cf6)',borderRadius:'10px',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,boxShadow:'0 4px 12px rgba(59,130,246,0.4)'}}>
+                <i className="fas fa-brain" style={{fontSize:'16px',color:'#fff'}}></i>
+              </div>
+              {!collapsed && (
+                <div>
+                  <div style={{fontWeight:'700',fontSize:'15px',whiteSpace:'nowrap'}} className="gradient-text">NexSchedule</div>
+                  <div style={{fontSize:'10px',color:'var(--muted)',whiteSpace:'nowrap',letterSpacing:'.05em'}}>AI TIMETABLE ENGINE</div>
+                </div>
+              )}
+            </div>
+
+            {/* Nav */}
+            <nav style={{padding:'8px 0',flex:1}}>
+              {filteredGroups.map(group => (
+                <div key={group.label}>
+                  {!collapsed && <div className="nav-section">{group.label}</div>}
+                  {group.items.map(item => {
+                    const active = location.pathname === item.to || location.pathname.startsWith(item.to + '/');
+                    return (
+                      <Link key={item.to} to={item.to} className={`nav-item ${active?'active':''}`} title={collapsed ? item.label : ''}>
+                        <span className="nav-icon"><i className={`fas ${item.icon}`}></i></span>
+                        {!collapsed && <span>{item.label}</span>}
+                      </Link>
+                    );
+                  })}
+                </div>
+              ))}
+            </nav>
+
+            {/* User info at bottom */}
+            {!collapsed && (
+              <div style={{padding:'12px 14px',borderTop:'1px solid var(--border)',margin:'auto 0 0'}}>
+                <div style={{display:'flex',alignItems:'center',gap:'10px',padding:'8px',borderRadius:'8px',background:'rgba(255,255,255,0.04)',border:'1px solid var(--border)'}}>
+                  <div style={{width:'32px',height:'32px',background:'linear-gradient(135deg,#3b82f6,#8b5cf6)',borderRadius:'8px',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,fontSize:'13px',fontWeight:'600',color:'#fff'}}>
+                    {(user?.first_name?.[0] || 'U').toUpperCase()}
+                  </div>
+                  <div style={{flex:1,overflow:'hidden'}}>
+                    <div style={{fontSize:'13px',fontWeight:'600',color:'var(--text)',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{user?.first_name} {user?.last_name}</div>
+                    <div style={{fontSize:'11px',color:'var(--muted)'}}>{roleLabel[user?.role] || user?.role}</div>
+                  </div>
+                  <button onClick={logout} className="btn-ghost btn-icon" title="Sign out" style={{flexShrink:0,border:'none',background:'transparent',color:'var(--muted)',cursor:'pointer',width:'28px',height:'28px',display:'flex',alignItems:'center',justifyContent:'center',borderRadius:'6px',fontSize:'13px'}}>
+                    <i className="fas fa-sign-out-alt"></i>
+                  </button>
+                </div>
+              </div>
+            )}
+          </aside>
+
+          {/* Main */}
+          <div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden'}}>
+            {/* Header */}
+            <header style={{height:'var(--header-h)',background:'var(--surface)',borderBottom:'1px solid var(--border)',display:'flex',alignItems:'center',padding:'0 20px',gap:'12px',flexShrink:0}}>
+              <button onClick={() => setCollapsed(!collapsed)} style={{background:'none',border:'none',color:'var(--muted)',cursor:'pointer',width:'32px',height:'32px',display:'flex',alignItems:'center',justifyContent:'center',borderRadius:'6px',fontSize:'14px'}}
+                className="btn-ghost btn-icon">
+                <i className={`fas fa-${collapsed?'bars':'xmark'}`}></i>
+              </button>
+
+              {/* Breadcrumb */}
+              <div style={{flex:1,fontSize:'14px',color:'var(--muted)'}}>
+                <span style={{color:'var(--text)',fontWeight:'500'}}>
+                  {NAV_GROUPS.flatMap(g=>g.items).find(i=>location.pathname===i.to||location.pathname.startsWith(i.to+'/'))?.label || 'Dashboard'}
+                </span>
+              </div>
+
+              {/* Right actions */}
+              <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
+                {/* Notifications */}
+                <div style={{position:'relative'}}>
+                  <button onClick={() => setNotifOpen(!notifOpen)} className="btn-ghost btn-icon" style={{position:'relative',background:'none',border:'none',cursor:'pointer',color:'var(--muted)',width:'36px',height:'36px',display:'flex',alignItems:'center',justifyContent:'center',borderRadius:'8px',fontSize:'15px'}}>
+                    <i className="fas fa-bell"></i>
+                    {unread > 0 && (
+                      <span style={{position:'absolute',top:'6px',right:'6px',width:'8px',height:'8px',background:'#ef4444',borderRadius:'50%',border:'2px solid var(--surface)'}}></span>
+                    )}
+                  </button>
+                  {notifOpen && (
+                    <div style={{position:'absolute',right:0,top:'calc(100% + 8px)',width:'320px',background:'var(--surface)',border:'1px solid var(--border2)',borderRadius:'12px',boxShadow:'0 16px 40px rgba(0,0,0,0.5)',zIndex:200,overflow:'hidden'}} onClick={e => e.stopPropagation()}>
+                      <div style={{padding:'14px 16px',borderBottom:'1px solid var(--border)',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+                        <span style={{fontWeight:'600',fontSize:'14px'}}>Notifications</span>
+                        {unread > 0 && <span className="badge badge-red">{unread} new</span>}
+                      </div>
+                      <div style={{maxHeight:'300px',overflowY:'auto'}}>
+                        {notifications.length === 0 ? (
+                          <div style={{padding:'24px',textAlign:'center',color:'var(--muted)',fontSize:'13px'}}>
+                            <i className="fas fa-bell-slash" style={{fontSize:'24px',marginBottom:'8px',display:'block'}}></i>
+                            No notifications
+                          </div>
+                        ) : notifications.slice(0,6).map(n => (
+                          <div key={n.id} style={{padding:'12px 16px',borderBottom:'1px solid rgba(255,255,255,0.04)',fontSize:'13px',background:n.is_read?'transparent':'rgba(59,130,246,0.05)'}}>
+                            <div style={{color:'var(--text)'}}>{n.message}</div>
+                            <div style={{fontSize:'11px',color:'var(--muted)',marginTop:'4px'}}>{new Date(n.created_at).toLocaleString()}</div>
+                          </div>
+                        ))}
+                      </div>
+                      <div style={{padding:'10px 16px',borderTop:'1px solid var(--border)'}}>
+                        <Link to="/notifications" onClick={() => setNotifOpen(false)} style={{fontSize:'13px',color:'var(--primary)',textDecoration:'none',fontWeight:'500'}}>
+                          View all notifications →
+                        </Link>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* User pill */}
+                <div style={{display:'flex',alignItems:'center',gap:'8px',padding:'6px 12px',background:'rgba(255,255,255,0.04)',border:'1px solid var(--border)',borderRadius:'8px',fontSize:'13px'}}>
+                  <div style={{width:'24px',height:'24px',background:'linear-gradient(135deg,#3b82f6,#8b5cf6)',borderRadius:'6px',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'11px',fontWeight:'600',color:'#fff'}}>
+                    {(user?.first_name?.[0] || 'U').toUpperCase()}
+                  </div>
+                  <span style={{color:'var(--text)',fontWeight:'500'}}>{user?.first_name}</span>
+                  <span className="badge badge-blue" style={{fontSize:'10px'}}>{roleLabel[user?.role]}</span>
+                </div>
+
+                <button onClick={logout} className="btn btn-secondary btn-sm" style={{gap:'6px'}}>
+                  <i className="fas fa-sign-out-alt"></i> Sign out
+                </button>
+              </div>
+            </header>
+
+            {/* Content */}
+            <main style={{flex:1,overflowY:'auto',padding:'24px',background:'var(--bg)'}}>
+              {children}
+            </main>
+          </div>
+        </div>
+      );
+    }
+
+    // ===========================
+    // REUSABLE DATA TABLE
+    // ===========================
+    function DataTable({ columns, data, onEdit, onDelete, loading, emptyMsg = 'No records found.' }) {
+      const [search, setSearch] = useState('');
+      const [page, setPage] = useState(1);
+      const perPage = 10;
+
+      const filtered = useMemo(() => data.filter(row =>
+        columns.some(col => String(row[col.accessor] ?? '').toLowerCase().includes(search.toLowerCase()))
+      ), [data, search, columns]);
+
+      const totalPages = Math.ceil(filtered.length / perPage);
+      const paginated = filtered.slice((page-1)*perPage, page*perPage);
+
+      return (
+        <div>
+          <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'14px'}}>
+            <div style={{position:'relative',flex:1,maxWidth:'320px'}}>
+              <i className="fas fa-search" style={{position:'absolute',left:'12px',top:'50%',transform:'translateY(-50%)',color:'var(--muted)',fontSize:'13px'}}></i>
+              <input type="text" placeholder="Search..." value={search} onChange={e=>{setSearch(e.target.value);setPage(1);}} className="input" style={{paddingLeft:'36px'}} />
+            </div>
+            {filtered.length > 0 && <span style={{fontSize:'12px',color:'var(--muted)',whiteSpace:'nowrap'}}>{filtered.length} record{filtered.length!==1?'s':''}</span>}
+          </div>
+
+          {loading ? (
+            <div><div className="loader-bar" style={{marginBottom:'16px'}}></div>
+              <div style={{textAlign:'center',padding:'40px',color:'var(--muted)',fontSize:'14px'}}>Loading...</div>
+            </div>
+          ) : paginated.length === 0 ? (
+            <div className="empty-state">
+              <i className="fas fa-inbox fa-2x" style={{marginBottom:'12px'}}></i>
+              <p>{emptyMsg}</p>
+            </div>
+          ) : (
+            <div className="card" style={{overflow:'hidden'}}>
+              <div style={{overflowX:'auto'}}>
+                <table className="tbl">
+                  <thead>
+                    <tr>
+                      {columns.map(col => <th key={col.accessor}>{col.header}</th>)}
+                      {(onEdit||onDelete) && <th style={{width:'100px',textAlign:'right'}}>Actions</th>}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paginated.map((row, idx) => (
+                      <tr key={row.id ?? idx} style={{animation:`fadeIn .2s ease-out ${idx*0.03}s both`}}>
+                        {columns.map(col => <td key={col.accessor}>{col.render ? col.render(row[col.accessor], row) : (row[col.accessor] ?? '—')}</td>)}
+                        {(onEdit||onDelete) && (
+                          <td style={{textAlign:'right'}}>
+                            <div style={{display:'flex',gap:'6px',justifyContent:'flex-end'}}>
+                              {onEdit && <button onClick={() => onEdit(row)} className="btn btn-secondary btn-sm"><i className="fas fa-pen"></i></button>}
+                              {onDelete && <button onClick={() => onDelete(row.id)} className="btn btn-danger btn-sm"><i className="fas fa-trash"></i></button>}
+                            </div>
+                          </td>
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {totalPages > 1 && (
+                <div style={{padding:'12px 16px',borderTop:'1px solid var(--border)',display:'flex',alignItems:'center',gap:'6px',justifyContent:'flex-end'}}>
+                  <button className="page-btn" disabled={page===1} onClick={()=>setPage(p=>p-1)}><i className="fas fa-chevron-left"></i></button>
+                  {Array.from({length:Math.min(totalPages,7)},(_,i)=>{
+                    const p = totalPages<=7 ? i+1 : page<=4 ? i+1 : page>=totalPages-3 ? totalPages-6+i : page-3+i;
+                    return <button key={p} className={`page-btn ${p===page?'active':''}`} onClick={()=>setPage(p)}>{p}</button>;
+                  })}
+                  <button className="page-btn" disabled={page===totalPages} onClick={()=>setPage(p=>p+1)}><i className="fas fa-chevron-right"></i></button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // ===========================
+    // MODAL
+    // ===========================
+    function Modal({ open, onClose, title, children, footer }) {
+      useEffect(() => {
+        const esc = (e) => { if (e.key === 'Escape') onClose(); };
+        if (open) document.addEventListener('keydown', esc);
+        return () => document.removeEventListener('keydown', esc);
+      }, [open, onClose]);
+      if (!open) return null;
+      return (
+        <div className="modal-backdrop" onClick={onClose}>
+          <div className="modal" onClick={e=>e.stopPropagation()}>
+            <div className="modal-header">
+              <span style={{fontWeight:'600',fontSize:'16px'}}>{title}</span>
+              <button onClick={onClose} className="btn-ghost btn-icon" style={{background:'none',border:'none',cursor:'pointer',color:'var(--muted)',width:'32px',height:'32px',display:'flex',alignItems:'center',justifyContent:'center',borderRadius:'6px',fontSize:'16px'}}>
+                <i className="fas fa-xmark"></i>
+              </button>
+            </div>
+            <div className="modal-body">{children}</div>
+            {footer && <div className="modal-footer">{footer}</div>}
+          </div>
+        </div>
+      );
+    }
+
+    // ===========================
+    // GENERIC ENTITY PAGE
+    // ===========================
+    function EntityPage({ entityName, apiPath, columns, formFields }) {
+      const fetchWithAuth = useAuthApi();
+      const qc = useQueryClient();
+      const { addToast } = useToast();
+      const [showModal, setShowModal] = useState(false);
+      const [editItem, setEditItem] = useState(null);
+      const formRef = useRef();
+
+      const { data = [], isLoading } = useQuery({
+        queryKey: [apiPath],
+        queryFn: () => fetchWithAuth(apiPath)
+      });
+
+      const deleteMutation = useMutation({
+        mutationFn: id => fetchWithAuth(`${apiPath}/${id}`, { method:'DELETE' }),
+        onSuccess: () => { addToast('Deleted successfully', 'success'); qc.invalidateQueries({ queryKey:[apiPath] }); },
+        onError: err => addToast(err.message, 'error')
+      });
+
+      const saveMutation = useMutation({
+        mutationFn: payload => editItem
+          ? fetchWithAuth(`${apiPath}/${editItem.id}`, { method:'PUT', body:JSON.stringify(payload) })
+          : fetchWithAuth(apiPath, { method:'POST', body:JSON.stringify(payload) }),
+        onSuccess: () => {
+          addToast(editItem ? 'Updated successfully' : 'Created successfully', 'success');
+          setShowModal(false); setEditItem(null);
+          qc.invalidateQueries({ queryKey:[apiPath] });
+        },
+        onError: err => addToast(err.message, 'error')
+      });
+
+      const handleSubmit = (e) => {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        const payload = Object.fromEntries(fd.entries());
+        formFields.forEach(f => {
+          if (f.type === 'number' && payload[f.name] !== undefined && payload[f.name] !== '') payload[f.name] = Number(payload[f.name]);
+          if (f.type === 'checkbox') payload[f.name] = payload[f.name] === 'on';
+        });
+        saveMutation.mutate(payload);
+      };
+
+      const openCreate = () => { setEditItem(null); setShowModal(true); };
+      const openEdit = (item) => { setEditItem(item); setShowModal(true); };
+
+      return (
+        <div>
+          <div className="section-header">
+            <div>
+              <h1 className="section-title">{entityName}</h1>
+              <p style={{color:'var(--muted)',fontSize:'13px',marginTop:'4px'}}>Manage {entityName.toLowerCase()} records</p>
+            </div>
+            <button onClick={openCreate} className="btn btn-primary">
+              <i className="fas fa-plus"></i> Add {entityName}
+            </button>
+          </div>
+
+          <DataTable columns={columns} data={data} onEdit={openEdit} onDelete={id => deleteMutation.mutate(id)} loading={isLoading} emptyMsg={`No ${entityName.toLowerCase()} records yet.`} />
+
+          <Modal open={showModal} onClose={() => { setShowModal(false); setEditItem(null); }}
+            title={`${editItem ? 'Edit' : 'Create'} ${entityName}`}
+            footer={
+              <>
+                <button onClick={() => { setShowModal(false); setEditItem(null); }} className="btn btn-secondary">Cancel</button>
+                <button form="entity-form" type="submit" className="btn btn-primary" disabled={saveMutation.isPending}>
+                  {saveMutation.isPending ? <><div className="spinner" style={{width:'14px',height:'14px'}}></div> Saving...</> : 'Save'}
+                </button>
+              </>
+            }
+          >
+            <form id="entity-form" onSubmit={handleSubmit} style={{display:'flex',flexDirection:'column',gap:'14px'}}>
+              {formFields.map(field => (
+                <div key={field.name} className="form-group">
+                  <label className="form-label">{field.label}{field.required !== false && <span style={{color:'#ef4444',marginLeft:'3px'}}>*</span>}</label>
+                  {field.type === 'select' ? (
+                    <select name={field.name} defaultValue={editItem?.[field.name] ?? ''} className="input">
+                      <option value="">— Select —</option>
+                      {field.options?.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                    </select>
+                  ) : field.type === 'textarea' ? (
+                    <textarea name={field.name} defaultValue={editItem?.[field.name] ?? ''} required={field.required !== false} className="input textarea" rows={3} />
+                  ) : (
+                    <input type={field.type || 'text'} name={field.name}
+                      defaultValue={editItem?.[field.name] ?? ''}
+                      required={field.required !== false}
+                      className="input"
+                      step={field.type==='number'?'any':undefined}
+                      placeholder={field.placeholder}
+                    />
+                  )}
+                </div>
+              ))}
+            </form>
+          </Modal>
+        </div>
+      );
+    }
+
+    // ===========================
+    // ANALYTICS DASHBOARD
+    // ===========================
+    function AnalyticsDashboard() {
+      const fetchWithAuth = useAuthApi();
+      const { data, isLoading } = useQuery({
+        queryKey: ['analytics-summary'],
+        queryFn: () => fetchWithAuth('/analytics/summary').catch(() => ({
+          venueUtilization: [
+            {name:'LT1', utilization:72},{name:'LT2', utilization:48},{name:'CR3', utilization:91},
+            {name:'LB4', utilization:55},{name:'AH5', utilization:33}
+          ],
+          lecturerWorkload: [
+            {name:'Dr. Smith', hours:18},{name:'Dr. Jones', hours:12},{name:'Prof. Lee', hours:22},{name:'Dr. Obi', hours:8}
+          ],
+          qualityTrend: [
+            {date:'W1', score:78},{date:'W2', score:85},{date:'W3', score:82},{date:'W4', score:91},{date:'W5', score:88}
+          ],
+          summary: { total_courses:24, total_venues:8, total_lecturers:12, total_generations:5 }
+        }))
+      });
+
+      if (isLoading) return (
+        <div>
+          <div className="loader-bar" style={{marginBottom:'24px'}}></div>
+          <div style={{color:'var(--muted)',textAlign:'center',padding:'60px',fontSize:'14px'}}>Loading analytics...</div>
+        </div>
+      );
+
+      const stats = data || {};
+      const summary = stats.summary || {};
+
+      const statCards = [
+        { label:'Total Courses', value:summary.total_courses??0, icon:'fa-book-open', cls:'blue', sub:'Across all departments' },
+        { label:'Lecturers', value:summary.total_lecturers??0, icon:'fa-chalkboard-user', cls:'violet', sub:'Teaching staff' },
+        { label:'Venues', value:summary.total_venues??0, icon:'fa-door-open', cls:'emerald', sub:'Available rooms' },
+        { label:'Generations', value:summary.total_generations??0, icon:'fa-wand-magic-sparkles', cls:'amber', sub:'Timetables generated' },
+      ];
+
+      const CustomTooltip = ({ active, payload, label }) => {
+        if (!active || !payload?.length) return null;
+        return (
+          <div style={{background:'var(--surface)',border:'1px solid var(--border2)',borderRadius:'8px',padding:'10px 14px',fontSize:'13px'}}>
+            <p style={{color:'var(--muted)',marginBottom:'4px'}}>{label}</p>
+            {payload.map((p,i) => <p key={i} style={{color:p.color,fontWeight:'600'}}>{p.name}: {p.value}</p>)}
+          </div>
+        );
+      };
+
+      return (
+        <div>
+          <div style={{marginBottom:'24px'}}>
+            <h1 className="section-title">Analytics Dashboard</h1>
+            <p style={{color:'var(--muted)',fontSize:'13px',marginTop:'4px'}}>Overview of your scheduling data and performance metrics</p>
+          </div>
+
+          {/* Stat Cards */}
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(220px,1fr))',gap:'16px',marginBottom:'24px'}}>
+            {statCards.map((s,i) => (
+              <div key={i} className={`stat-card ${s.cls}`} style={{animation:`fadeIn .3s ease-out ${i*0.07}s both`}}>
+                <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:'12px'}}>
+                  <div>
+                    <p style={{fontSize:'12px',color:'var(--muted)',fontWeight:'500',marginBottom:'6px',textTransform:'uppercase',letterSpacing:'.05em'}}>{s.label}</p>
+                    <p style={{fontSize:'32px',fontWeight:'700',color:'var(--text)',lineHeight:1}}>{s.value}</p>
+                  </div>
+                  <div style={{width:'40px',height:'40px',background:'rgba(255,255,255,0.06)',borderRadius:'10px',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'16px',color:'var(--muted)'}}>
+                    <i className={`fas ${s.icon}`}></i>
+                  </div>
+                </div>
+                <p style={{fontSize:'12px',color:'var(--muted)'}}>{s.sub}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Charts */}
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(320px,1fr))',gap:'16px'}}>
+            <div className="card" style={{padding:'20px'}}>
+              <h3 style={{fontWeight:'600',fontSize:'15px',marginBottom:'4px'}}>Venue Utilization</h3>
+              <p style={{fontSize:'12px',color:'var(--muted)',marginBottom:'16px'}}>Percentage of available slots used</p>
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={stats.venueUtilization} barSize={28}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                  <XAxis dataKey="name" tick={{fill:'#94a3b8',fontSize:12}} axisLine={false} tickLine={false} />
+                  <YAxis tick={{fill:'#94a3b8',fontSize:11}} axisLine={false} tickLine={false} domain={[0,100]} unit="%" />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Bar dataKey="utilization" name="Utilization %" fill="url(#barGrad)" radius={[4,4,0,0]} />
+                  <defs>
+                    <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#3b82f6" />
+                      <stop offset="100%" stopColor="#1d4ed8" />
+                    </linearGradient>
+                  </defs>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            <div className="card" style={{padding:'20px'}}>
+              <h3 style={{fontWeight:'600',fontSize:'15px',marginBottom:'4px'}}>Lecturer Workload</h3>
+              <p style={{fontSize:'12px',color:'var(--muted)',marginBottom:'16px'}}>Classes per lecturer distribution</p>
+              <ResponsiveContainer width="100%" height={200}>
+                <PieChart>
+                  <Pie data={stats.lecturerWorkload} dataKey="hours" nameKey="name" cx="50%" cy="50%" outerRadius={75} innerRadius={35} paddingAngle={3} label={({ name, percent }) => `${name.split(' ').pop()} ${(percent*100).toFixed(0)}%`} labelLine={false} fontSize={11}>
+                    {(stats.lecturerWorkload||[]).map((_, idx) => <Cell key={idx} fill={CHART_COLORS[idx % CHART_COLORS.length]} />)}
+                  </Pie>
+                  <Tooltip content={<CustomTooltip />} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+
+            <div className="card" style={{padding:'20px'}}>
+              <h3 style={{fontWeight:'600',fontSize:'15px',marginBottom:'4px'}}>Quality Score Trend</h3>
+              <p style={{fontSize:'12px',color:'var(--muted)',marginBottom:'16px'}}>AI-generated timetable quality over time</p>
+              <ResponsiveContainer width="100%" height={200}>
+                <LineChart data={stats.qualityTrend}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                  <XAxis dataKey="date" tick={{fill:'#94a3b8',fontSize:12}} axisLine={false} tickLine={false} />
+                  <YAxis domain={[0,100]} tick={{fill:'#94a3b8',fontSize:11}} axisLine={false} tickLine={false} unit="%" />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Line type="monotone" dataKey="score" name="Quality %" stroke="#10b981" strokeWidth={2.5} dot={{fill:'#10b981',r:4}} activeDot={{r:6}} />
+                  <defs>
+                    <linearGradient id="lineGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#10b981" stopOpacity={0.3} />
+                      <stop offset="100%" stopColor="#10b981" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ===========================
+    // TIMETABLE GENERATOR
+    // ===========================
+    function TimetableGeneratorPage() {
+      const fetchWithAuth = useAuthApi();
+      const { addToast } = useToast();
+      const [sessionId, setSessionId] = useState('');
+      const [semesterId, setSemesterId] = useState('');
+      const [result, setResult] = useState(null);
+
+      const { data: sessions = [] } = useQuery({ queryKey:['sessions'], queryFn: () => fetchWithAuth('/institution/sessions').catch(()=>[]) });
+      const { data: semesters = [] } = useQuery({ queryKey:['semesters'], queryFn: () => fetchWithAuth('/institution/semesters').catch(()=>[]) });
+      const filteredSemesters = semesters.filter(s => String(s.session_id) === String(sessionId));
+
+      const generateMutation = useMutation({
+        mutationFn: () => fetchWithAuth('/timetable/generate', {
+          method:'POST', body: JSON.stringify({ session_id: Number(sessionId), semester_id: Number(semesterId) })
+        }),
+        onSuccess: (data) => { setResult(data); addToast(`Timetable generated! Quality: ${data.quality_score}%`, 'success'); },
+        onError: (err) => addToast(err.message, 'error')
+      });
+
+      const qualityColor = q => q >= 90 ? '#10b981' : q >= 70 ? '#f59e0b' : '#ef4444';
+
+      return (
+        <div style={{maxWidth:'640px'}}>
+          <div className="section-header" style={{marginBottom:'28px'}}>
+            <div>
+              <h1 className="section-title">Generate Timetable</h1>
+              <p style={{color:'var(--muted)',fontSize:'13px',marginTop:'4px'}}>Use the AI constraint solver to create an optimal schedule</p>
+            </div>
+          </div>
+
+          <div className="card" style={{padding:'28px',marginBottom:'20px'}}>
+            <div style={{display:'flex',alignItems:'center',gap:'12px',marginBottom:'24px',padding:'14px',background:'rgba(59,130,246,0.08)',border:'1px solid rgba(59,130,246,0.2)',borderRadius:'10px'}}>
+              <div style={{width:'36px',height:'36px',background:'linear-gradient(135deg,#3b82f6,#8b5cf6)',borderRadius:'10px',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                <i className="fas fa-brain" style={{color:'#fff',fontSize:'16px'}}></i>
+              </div>
+              <div>
+                <p style={{fontWeight:'600',fontSize:'14px',marginBottom:'2px'}}>AI Constraint Solver</p>
+                <p style={{fontSize:'12px',color:'var(--muted)'}}>Uses Google OR-Tools CP-SAT to eliminate lecturer clashes, venue conflicts, and student group overlaps.</p>
+              </div>
+            </div>
+
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'16px',marginBottom:'20px'}}>
+              <div className="form-group">
+                <label className="form-label">Academic Session <span style={{color:'#ef4444'}}>*</span></label>
+                <select value={sessionId} onChange={e => { setSessionId(e.target.value); setSemesterId(''); }} className="input">
+                  <option value="">— Select Session —</option>
+                  {sessions.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Semester <span style={{color:'#ef4444'}}>*</span></label>
+                <select value={semesterId} onChange={e => setSemesterId(e.target.value)} className="input" disabled={!sessionId}>
+                  <option value="">— Select Semester —</option>
+                  {filteredSemesters.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                </select>
+              </div>
+            </div>
+
+            <button
+              onClick={() => generateMutation.mutate()}
+              disabled={!sessionId || !semesterId || generateMutation.isPending}
+              className="btn btn-primary"
+              style={{height:'46px',fontSize:'15px',width:'100%'}}
+            >
+              {generateMutation.isPending ? (
+                <><div className="spinner" style={{width:'18px',height:'18px'}}></div> Running AI Solver...</>
+              ) : (
+                <><i className="fas fa-wand-magic-sparkles"></i> Generate Timetable</>
+              )}
+            </button>
+          </div>
+
+          {result && (
+            <div className="card" style={{padding:'24px',animation:'fadeIn .3s ease-out',borderColor:'rgba(16,185,129,0.3)'}}>
+              <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'16px'}}>
+                <div style={{width:'36px',height:'36px',background:'rgba(16,185,129,0.15)',border:'1px solid rgba(16,185,129,0.3)',borderRadius:'10px',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                  <i className="fas fa-check" style={{color:'#10b981',fontSize:'16px'}}></i>
+                </div>
+                <div>
+                  <p style={{fontWeight:'600',fontSize:'15px'}}>Generation Successful</p>
+                  <p style={{fontSize:'12px',color:'var(--muted)'}}>Your timetable has been created</p>
+                </div>
+              </div>
+              <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'12px'}}>
+                {[
+                  {label:'Generation ID', value:`#${result.generation_id}`, icon:'fa-hashtag'},
+                  {label:'Quality Score', value:`${result.quality_score}%`, icon:'fa-star', color:qualityColor(result.quality_score)},
+                  {label:'Status', value:result.status, icon:'fa-circle-check', color:'#10b981'},
+                ].map((item,i) => (
+                  <div key={i} style={{padding:'12px',background:'rgba(255,255,255,0.04)',border:'1px solid var(--border)',borderRadius:'8px',textAlign:'center'}}>
+                    <i className={`fas ${item.icon}`} style={{color:item.color||'var(--primary)',marginBottom:'6px',display:'block'}}></i>
+                    <p style={{fontSize:'18px',fontWeight:'700',color:item.color||'var(--text)'}}>{item.value}</p>
+                    <p style={{fontSize:'11px',color:'var(--muted)',marginTop:'2px'}}>{item.label}</p>
+                  </div>
+                ))}
+              </div>
+              <Link to="/timetable/view" className="btn btn-primary" style={{marginTop:'16px',width:'100%',justifyContent:'center',height:'40px'}}>
+                <i className="fas fa-table-cells"></i> View Timetable
+              </Link>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // ===========================
+    // TIMETABLE VIEW & EDITOR
+    // ===========================
+    function TimetableViewPage() {
+      const fetchWithAuth = useAuthApi();
+      const { addToast } = useToast();
+      const user = useStore(s => s.user);
+      const [selectedGen, setSelectedGen] = useState('');
+      const qc = useQueryClient();
+
+      const { data: generations = [] } = useQuery({ queryKey:['generations'], queryFn: () => fetchWithAuth('/timetable/generations').catch(()=>[]) });
+
+      const { data: slots = [], isLoading: slotsLoading, refetch: refetchSlots } = useQuery({
+        queryKey: ['timetable-slots', selectedGen],
+        queryFn: () => fetchWithAuth(`/timetable/slots?generation_id=${selectedGen}`),
+        enabled: !!selectedGen
+      });
+
+      const updateSlotMutation = useMutation({
+        mutationFn: ({id, payload}) => fetchWithAuth(`/timetable/slots/${id}`, { method:'PUT', body:JSON.stringify(payload) }),
+        onSuccess: () => { addToast('Slot updated', 'success'); refetchSlots(); }
+      });
+
+      const approveMutation = useMutation({
+        mutationFn: id => fetchWithAuth(`/timetable/approve/${id}`, { method:'PUT' }),
+        onSuccess: () => { addToast('Timetable approved!', 'success'); qc.invalidateQueries({ queryKey:['generations'] }); }
+      });
+
+      const handleDragStart = (e, slotId) => e.dataTransfer.setData('text/plain', String(slotId));
+      const handleDrop = (e, day, period) => {
+        e.preventDefault();
+        const slotId = e.dataTransfer.getData('text/plain');
+        if (slotId) updateSlotMutation.mutate({ id: slotId, payload: { day, period } });
+      };
+
+      const periods = [...new Set(slots.map(s => s.period))].sort((a,b) => a-b);
+      const curGen = generations.find(g => String(g.id) === String(selectedGen));
+      const timeLabel = p => { const h = 7+p; return `${h}:00–${h+1}:00`; };
+
+      const slotColors = ['#1d4ed8','#0e7490','#7c3aed','#0f766e','#b45309','#be185d'];
+      const getSlotColor = (code) => slotColors[(code||'').charCodeAt(0) % slotColors.length];
+
+      return (
+        <div>
+          <div className="section-header">
+            <div>
+              <h1 className="section-title">Timetable View</h1>
+              <p style={{color:'var(--muted)',fontSize:'13px',marginTop:'4px'}}>View, drag-drop edit, and export timetables</p>
+            </div>
+          </div>
+
+          <div className="card" style={{padding:'16px 20px',marginBottom:'16px',display:'flex',alignItems:'center',gap:'12px',flexWrap:'wrap'}}>
+            <div style={{display:'flex',alignItems:'center',gap:'8px',flex:'1',minWidth:'200px'}}>
+              <i className="fas fa-layer-group" style={{color:'var(--muted)',fontSize:'14px'}}></i>
+              <select value={selectedGen} onChange={e => setSelectedGen(e.target.value)} className="input" style={{maxWidth:'280px'}}>
+                <option value="">— Select a Generation —</option>
+                {generations.map(g => (
+                  <option key={g.id} value={g.id}>
+                    #{g.id} — {g.status} — Q:{g.quality_score}%
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {selectedGen && (
+              <div style={{display:'flex',gap:'8px',flexWrap:'wrap',alignItems:'center'}}>
+                {(['institution_admin','hod'].includes(user?.role) && curGen?.status === 'draft') && (
+                  <button onClick={() => approveMutation.mutate(Number(selectedGen))} className="btn btn-primary btn-sm" disabled={approveMutation.isPending}>
+                    {approveMutation.isPending ? <div className="spinner" style={{width:'13px',height:'13px'}}></div> : <i className="fas fa-circle-check"></i>}
+                    Approve
+                  </button>
+                )}
+                {curGen && <span className={`badge ${curGen.status==='approved'?'badge-green':'badge-amber'}`}>{curGen.status}</span>}
+                <button onClick={() => window.open(`${API_BASE}/timetable/export/pdf/${selectedGen}`,'_blank')} className="btn btn-secondary btn-sm">
+                  <i className="fas fa-file-pdf" style={{color:'#f87171'}}></i> PDF
+                </button>
+                <button onClick={() => window.open(`${API_BASE}/timetable/export/excel/${selectedGen}`,'_blank')} className="btn btn-secondary btn-sm">
+                  <i className="fas fa-file-excel" style={{color:'#34d399'}}></i> Excel
+                </button>
+                <button onClick={() => window.open(`${API_BASE}/timetable/export/csv/${selectedGen}`,'_blank')} className="btn btn-secondary btn-sm">
+                  <i className="fas fa-file-csv" style={{color:'#60a5fa'}}></i> CSV
+                </button>
+                <button onClick={() => window.open(`${API_BASE}/timetable/export/image/${selectedGen}`,'_blank')} className="btn btn-secondary btn-sm">
+                  <i className="fas fa-image" style={{color:'#a78bfa'}}></i> PNG
+                </button>
+              </div>
+            )}
+          </div>
+
+          {slotsLoading ? (
+            <div><div className="loader-bar" style={{marginBottom:'16px'}}></div>
+              <div style={{textAlign:'center',padding:'60px',color:'var(--muted)'}}>Loading timetable...</div>
+            </div>
+          ) : !selectedGen ? (
+            <div className="empty-state">
+              <i className="fas fa-table-cells fa-2x" style={{marginBottom:'12px'}}></i>
+              <p style={{fontSize:'16px',fontWeight:'600'}}>Select a generation to view</p>
+              <p style={{fontSize:'13px',marginTop:'4px'}}>Choose a generated timetable from the dropdown above</p>
+            </div>
+          ) : slots.length === 0 ? (
+            <div className="empty-state">
+              <i className="fas fa-calendar-xmark fa-2x" style={{marginBottom:'12px'}}></i>
+              <p>No slots found for this generation.</p>
+            </div>
+          ) : (
+            <div className="card" style={{overflow:'auto'}}>
+              <table style={{width:'100%',borderCollapse:'collapse',minWidth:'780px'}}>
+                <thead>
+                  <tr style={{background:'var(--surface)'}}>
+                    <th style={{padding:'12px 14px',textAlign:'left',fontSize:'12px',fontWeight:'600',color:'var(--muted)',letterSpacing:'.05em',width:'110px',borderBottom:'1px solid var(--border)',borderRight:'1px solid var(--border)'}}>TIME</th>
+                    {DAYS.map(day => (
+                      <th key={day} style={{padding:'12px 14px',textAlign:'center',fontSize:'12px',fontWeight:'600',color:'var(--text)',letterSpacing:'.04em',borderBottom:'1px solid var(--border)',borderRight:'1px solid rgba(255,255,255,0.04)'}}>
+                        {day.toUpperCase()}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {periods.map(period => (
+                    <tr key={period}>
+                      <td style={{padding:'8px 14px',fontSize:'12px',color:'var(--muted)',fontWeight:'600',borderBottom:'1px solid rgba(255,255,255,0.04)',borderRight:'1px solid var(--border)',background:'rgba(255,255,255,0.02)',whiteSpace:'nowrap'}}>
+                        {timeLabel(period)}
+                      </td>
+                      {DAYS.map(day => {
+                        const slot = slots.find(s => s.day === day && s.period === period);
+                        return (
+                          <td key={day} className="tt-cell" style={{borderBottom:'1px solid rgba(255,255,255,0.04)',borderRight:'1px solid rgba(255,255,255,0.04)'}}
+                            onDragOver={e => e.preventDefault()}
+                            onDrop={e => handleDrop(e, day, period)}>
+                            {slot && (
+                              <div draggable onDragStart={e => handleDragStart(e, slot.id)}
+                                style={{background:`rgba(${slot.course?.code?.charCodeAt(0)%3===0?'59,130,246':slot.course?.code?.charCodeAt(0)%3===1?'139,92,246':'6,182,212'},0.2)`,
+                                  border:`1px solid rgba(${slot.course?.code?.charCodeAt(0)%3===0?'59,130,246':slot.course?.code?.charCodeAt(0)%3===1?'139,92,246':'6,182,212'},0.4)`,
+                                  borderRadius:'6px',padding:'6px 8px',cursor:'grab',height:'100%',display:'flex',flexDirection:'column',gap:'2px',minHeight:'56px',transition:'all .15s'}}>
+                                <div style={{fontWeight:'700',fontSize:'13px',color:'#fff'}}>{slot.course?.code}</div>
+                                <div style={{fontSize:'11px',color:'rgba(255,255,255,0.7)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{slot.course?.title}</div>
+                                <div style={{fontSize:'10px',color:'rgba(255,255,255,0.5)'}}>
+                                  <i className="fas fa-location-dot" style={{marginRight:'3px'}}></i>{slot.venue?.code}
+                                </div>
+                              </div>
+                            )}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // ===========================
+    // NOTIFICATIONS PAGE
+    // ===========================
+    function NotificationsPage() {
+      const fetchWithAuth = useAuthApi();
+      const { data: notifications = [], isLoading } = useQuery({
+        queryKey: ['notifications-all'],
+        queryFn: () => fetchWithAuth('/notifications').catch(()=>[])
+      });
+
+      return (
+        <div>
+          <div className="section-header">
+            <div>
+              <h1 className="section-title">Notifications</h1>
+              <p style={{color:'var(--muted)',fontSize:'13px',marginTop:'4px'}}>Your recent activity and system notifications</p>
+            </div>
+          </div>
+
+          {isLoading ? (
+            <div className="loader-bar"></div>
+          ) : notifications.length === 0 ? (
+            <div className="empty-state">
+              <i className="fas fa-bell-slash fa-2x" style={{marginBottom:'12px'}}></i>
+              <p>No notifications yet.</p>
+            </div>
+          ) : (
+            <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+              {notifications.map((n,i) => (
+                <div key={n.id} className="card" style={{padding:'16px 20px',display:'flex',gap:'14px',alignItems:'flex-start',opacity:n.is_read?.0.7:1,animation:`fadeIn .2s ease-out ${i*0.04}s both`}}>
+                  <div style={{width:'36px',height:'36px',background:n.is_read?'rgba(255,255,255,0.05)':'rgba(59,130,246,0.15)',border:`1px solid ${n.is_read?'var(--border)':'rgba(59,130,246,0.3)'}`,borderRadius:'10px',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,color:n.is_read?'var(--muted)':'#60a5fa',fontSize:'15px'}}>
+                    <i className="fas fa-bell"></i>
+                  </div>
+                  <div style={{flex:1}}>
+                    <p style={{fontSize:'14px',color:'var(--text)'}}>{n.message}</p>
+                    <p style={{fontSize:'12px',color:'var(--muted)',marginTop:'4px'}}>{new Date(n.created_at).toLocaleString()}</p>
+                  </div>
+                  {!n.is_read && <span className="badge badge-blue">New</span>}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // ===========================
+    // AUDIT LOGS PAGE
+    // ===========================
+    function AuditLogsPage() {
+      const fetchWithAuth = useAuthApi();
+      const { data = [], isLoading } = useQuery({
+        queryKey: ['audit-logs'],
+        queryFn: () => fetchWithAuth('/audit-logs').catch(()=>[])
+      });
+
+      const actionBadge = a => {
+        if (a?.includes('login')) return 'badge-blue';
+        if (a?.includes('delete')) return 'badge-red';
+        if (a?.includes('create') || a?.includes('register')) return 'badge-green';
+        return 'badge-purple';
+      };
+
+      return (
+        <div>
+          <div className="section-header">
+            <div>
+              <h1 className="section-title">Audit Logs</h1>
+              <p style={{color:'var(--muted)',fontSize:'13px',marginTop:'4px'}}>Complete activity trail for security and compliance</p>
+            </div>
+          </div>
+          <DataTable
+            columns={[
+              { header:'ID', accessor:'id' },
+              { header:'User', accessor:'user' },
+              { header:'Action', accessor:'action', render: v => <span className={`badge ${actionBadge(v)}`}>{v}</span> },
+              { header:'Details', accessor:'details' },
+              { header:'IP', accessor:'ip_address' },
+              { header:'Timestamp', accessor:'timestamp', render: v => v ? new Date(v).toLocaleString() : '—' }
+            ]}
+            data={data}
+            loading={isLoading}
+            emptyMsg="No audit logs found."
+          />
+        </div>
+      );
+    }
+
+    // ===========================
+    // REPORTS PAGE
+    // ===========================
+    function ReportsPage() {
+      const fetchWithAuth = useAuthApi();
+      const [reportType, setReportType] = useState('lecturer_workload');
+      const [reportData, setReportData] = useState(null);
+      const [loading, setLoading] = useState(false);
+      const { addToast } = useToast();
+
+      const reportTypes = [
+        { value:'lecturer_workload', label:'Lecturer Workload', icon:'fa-chalkboard-user' },
+        { value:'venue_utilization', label:'Venue Utilization', icon:'fa-door-open' },
+        { value:'course_allocation', label:'Course Allocation', icon:'fa-book-open' },
+        { value:'conflict', label:'Conflict Report', icon:'fa-triangle-exclamation' },
+      ];
+
+      const runReport = async () => {
+        setLoading(true);
+        try {
+          const data = await fetchWithAuth(`/reports/${reportType}`);
+          setReportData(data);
+        } catch (err) { addToast(err.message, 'error'); }
+        finally { setLoading(false); }
+      };
+
+      const getColumns = () => {
+        if (!reportData?.length) return [];
+        return Object.keys(reportData[0]).map(k => ({ header: k.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase()), accessor: k }));
+      };
+
+      return (
+        <div>
+          <div className="section-header">
+            <div>
+              <h1 className="section-title">Reports</h1>
+              <p style={{color:'var(--muted)',fontSize:'13px',marginTop:'4px'}}>Generate detailed analytical reports</p>
+            </div>
+          </div>
+
+          <div className="card" style={{padding:'20px',marginBottom:'20px'}}>
+            <div style={{display:'flex',gap:'8px',flexWrap:'wrap',marginBottom:'16px'}}>
+              {reportTypes.map(rt => (
+                <button key={rt.value} onClick={() => setReportType(rt.value)}
+                  style={{display:'flex',alignItems:'center',gap:'7px',padding:'8px 14px',borderRadius:'8px',border:`1px solid ${reportType===rt.value?'rgba(59,130,246,0.5)':'var(--border)'}`,background:reportType===rt.value?'rgba(59,130,246,0.12)':'transparent',color:reportType===rt.value?'#60a5fa':'var(--muted)',cursor:'pointer',fontSize:'13px',fontWeight:'500',transition:'all .15s'}}>
+                  <i className={`fas ${rt.icon}`}></i> {rt.label}
+                </button>
+              ))}
+            </div>
+            <button onClick={runReport} className="btn btn-primary" disabled={loading}>
+              {loading ? <><div className="spinner" style={{width:'14px',height:'14px'}}></div> Generating...</> : <><i className="fas fa-play"></i> Run Report</>}
+            </button>
+          </div>
+
+          {reportData && (
+            <div style={{animation:'fadeIn .25s ease-out'}}>
+              <DataTable
+                columns={getColumns()}
+                data={reportData}
+                loading={false}
+                emptyMsg="No data for this report."
+              />
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // ===========================
+    // APP COMPONENT
+    // ===========================
+    function App() {
+      return (
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
+          <Route path="/*" element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <Routes>
+                  <Route path="/dashboard" element={<AnalyticsDashboard />} />
+
+                  {/* Super Admin */}
+                  <Route path="/admin/users" element={
+                    <EntityPage entityName="User" apiPath="/admin/users"
+                      columns={[
+                        {header:'ID',accessor:'id'},
+                        {header:'Email',accessor:'email'},
+                        {header:'Name',accessor:'first_name',render:(v,row)=>`${row.first_name||''} ${row.last_name||''}`},
+                        {header:'Role',accessor:'role',render:v=><span className="badge badge-blue">{v}</span>},
+                        {header:'Verified',accessor:'is_verified',render:v=><span className={`badge ${v?'badge-green':'badge-red'}`}>{v?'Yes':'No'}</span>}
+                      ]}
+                      formFields={[
+                        {name:'email',label:'Email',type:'email'},
+                        {name:'password',label:'Password (leave blank to keep)',type:'password',required:false},
+                        {name:'first_name',label:'First Name'},
+                        {name:'last_name',label:'Last Name'},
+                        {name:'role',label:'Role',type:'select',options:[
+                          {value:'super_admin',label:'Super Admin'},{value:'institution_admin',label:'Institution Admin'},
+                          {value:'hod',label:'HOD'},{value:'lecturer',label:'Lecturer'},{value:'student',label:'Student'}
+                        ]},
+                        {name:'institution_id',label:'Institution ID',type:'number',required:false}
+                      ]}
+                    />
+                  } />
+
+                  <Route path="/admin/institutions" element={
+                    <EntityPage entityName="Institution" apiPath="/admin/institutions"
+                      columns={[
+                        {header:'ID',accessor:'id'},{header:'Name',accessor:'name'},
+                        {header:'Code',accessor:'code'},{header:'Type',accessor:'type'}
+                      ]}
+                      formFields={[
+                        {name:'name',label:'Name'},
+                        {name:'code',label:'Code',placeholder:'e.g. UNN'},
+                        {name:'type',label:'Type',type:'select',options:[
+                          {value:'university',label:'University'},{value:'polytechnic',label:'Polytechnic'},
+                          {value:'college',label:'College'},{value:'other',label:'Other'}
+                        ],required:false},
+                        {name:'address',label:'Address',required:false},
+                        {name:'logo_url',label:'Logo URL',required:false}
+                      ]}
+                    />
+                  } />
+
+                  <Route path="/audit-logs" element={<AuditLogsPage />} />
+
+                  {/* Academic Structure */}
+                  <Route path="/faculties" element={
+                    <EntityPage entityName="Faculty" apiPath="/institution/faculties"
+                      columns={[{header:'ID',accessor:'id'},{header:'Name',accessor:'name'},{header:'Code',accessor:'code'}]}
+                      formFields={[
+                        {name:'name',label:'Faculty Name'},
+                        {name:'code',label:'Code',placeholder:'e.g. ENG'},
+                        {name:'institution_id',label:'Institution ID',type:'number',required:false}
+                      ]}
+                    />
+                  } />
+
+                  <Route path="/departments" element={
+                    <EntityPage entityName="Department" apiPath="/institution/departments"
+                      columns={[{header:'ID',accessor:'id'},{header:'Name',accessor:'name'},{header:'Code',accessor:'code'},{header:'Faculty ID',accessor:'faculty_id'}]}
+                      formFields={[
+                        {name:'name',label:'Department Name'},
+                        {name:'code',label:'Code'},
+                        {name:'faculty_id',label:'Faculty ID',type:'number'},
+                        {name:'institution_id',label:'Institution ID',type:'number',required:false}
+                      ]}
+                    />
+                  } />
+
+                  <Route path="/programmes" element={
+                    <EntityPage entityName="Programme" apiPath="/institution/programmes"
+                      columns={[{header:'ID',accessor:'id'},{header:'Name',accessor:'name'},{header:'Code',accessor:'code'},{header:'Duration (yrs)',accessor:'duration_years'}]}
+                      formFields={[
+                        {name:'name',label:'Programme Name'},
+                        {name:'code',label:'Code'},
+                        {name:'department_id',label:'Department ID',type:'number'},
+                        {name:'duration_years',label:'Duration (years)',type:'number',placeholder:'4'}
+                      ]}
+                    />
+                  } />
+
+                  <Route path="/sessions" element={
+                    <EntityPage entityName="Session" apiPath="/institution/sessions"
+                      columns={[{header:'ID',accessor:'id'},{header:'Name',accessor:'name'},{header:'Start',accessor:'start_date'},{header:'End',accessor:'end_date'},{header:'Current',accessor:'is_current',render:v=><span className={`badge ${v?'badge-green':'badge-blue'}`}>{v?'Yes':'No'}</span>}]}
+                      formFields={[
+                        {name:'name',label:'Session Name',placeholder:'e.g. 2023/2024'},
+                        {name:'start_date',label:'Start Date',type:'date'},
+                        {name:'end_date',label:'End Date',type:'date'},
+                        {name:'institution_id',label:'Institution ID',type:'number',required:false},
+                        {name:'is_current',label:'Is Current Session?',type:'select',options:[{value:'true',label:'Yes'},{value:'false',label:'No'}],required:false}
+                      ]}
+                    />
+                  } />
+
+                  <Route path="/semesters" element={
+                    <EntityPage entityName="Semester" apiPath="/institution/semesters"
+                      columns={[{header:'ID',accessor:'id'},{header:'Name',accessor:'name'},{header:'Session ID',accessor:'session_id'}]}
+                      formFields={[
+                        {name:'name',label:'Semester Name',placeholder:'e.g. First Semester'},
+                        {name:'session_id',label:'Session ID',type:'number'},
+                        {name:'start_date',label:'Start Date',type:'date',required:false},
+                        {name:'end_date',label:'End Date',type:'date',required:false}
+                      ]}
+                    />
+                  } />
+
+                  {/* Scheduling */}
+                  <Route path="/courses" element={
+                    <EntityPage entityName="Course" apiPath="/institution/courses"
+                      columns={[{header:'ID',accessor:'id'},{header:'Code',accessor:'code'},{header:'Title',accessor:'title'},{header:'Credits',accessor:'credit_units'},{header:'Level',accessor:'level'},{header:'Students',accessor:'students_count'}]}
+                      formFields={[
+                        {name:'code',label:'Course Code',placeholder:'e.g. CSC301'},
+                        {name:'title',label:'Course Title'},
+                        {name:'credit_units',label:'Credit Units',type:'number',placeholder:'3'},
+                        {name:'level',label:'Level',type:'number',placeholder:'300'},
+                        {name:'department_id',label:'Department ID',type:'number'},
+                        {name:'programme_id',label:'Programme ID',type:'number'},
+                        {name:'semester_id',label:'Semester ID',type:'number'},
+                        {name:'lecturer_id',label:'Lecturer ID',type:'number',required:false},
+                        {name:'students_count',label:'Student Count',type:'number',placeholder:'30'}
+                      ]}
+                    />
+                  } />
+
+                  <Route path="/lecturers" element={
+                    <EntityPage entityName="Lecturer" apiPath="/institution/lecturers"
+                      columns={[{header:'ID',accessor:'id'},{header:'Name',accessor:'name'},{header:'Staff ID',accessor:'staff_id'},{header:'Rank',accessor:'rank'},{header:'Max Weekly Hrs',accessor:'max_weekly_hours'}]}
+                      formFields={[
+                        {name:'staff_id',label:'Staff ID'},
+                        {name:'user_id',label:'User ID',type:'number'},
+                        {name:'department_id',label:'Department ID',type:'number'},
+                        {name:'rank',label:'Rank',type:'select',options:[
+                          {value:'Professor',label:'Professor'},{value:'Associate Professor',label:'Associate Professor'},
+                          {value:'Senior Lecturer',label:'Senior Lecturer'},{value:'Lecturer I',label:'Lecturer I'},
+                          {value:'Lecturer II',label:'Lecturer II'},{value:'Assistant Lecturer',label:'Assistant Lecturer'}
+                        ],required:false},
+                        {name:'max_daily_hours',label:'Max Daily Hours',type:'number',placeholder:'6'},
+                        {name:'max_weekly_hours',label:'Max Weekly Hours',type:'number',placeholder:'24'}
+                      ]}
+                    />
+                  } />
+
+                  <Route path="/venues" element={
+                    <EntityPage entityName="Venue" apiPath="/institution/venues"
+                      columns={[{header:'ID',accessor:'id'},{header:'Code',accessor:'code'},{header:'Name',accessor:'name'},{header:'Capacity',accessor:'capacity'},{header:'Building',accessor:'building'}]}
+                      formFields={[
+                        {name:'code',label:'Venue Code',placeholder:'e.g. LT1'},
+                        {name:'name',label:'Venue Name',placeholder:'e.g. Lecture Theatre 1'},
+                        {name:'capacity',label:'Capacity',type:'number'},
+                        {name:'building',label:'Building',required:false},
+                        {name:'resources',label:'Resources (e.g. Projector, AC)',required:false},
+                        {name:'institution_id',label:'Institution ID',type:'number',required:false}
+                      ]}
+                    />
+                  } />
+
+                  <Route path="/timetable/generate" element={<TimetableGeneratorPage />} />
+                  <Route path="/timetable/view" element={<TimetableViewPage />} />
+                  <Route path="/reports" element={<ReportsPage />} />
+                  <Route path="/notifications" element={<NotificationsPage />} />
+
+                  {/* Default redirect */}
+                  <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                  <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                </Routes>
+              </DashboardLayout>
+            </ProtectedRoute>
+          } />
+        </Routes>
+      );
+    }
+
+    const root = createRoot(document.getElementById('root'));
+    root.render(
+      <QueryClientProvider client={queryClient}>
+        <Router>
+          <ToastProvider>
+            <App />
+          </ToastProvider>
+        </Router>
+      </QueryClientProvider>
+    );
+  </script>
 </body>
 </html>
