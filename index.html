@@ -57,6 +57,7 @@
     };
   </script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <style>
     *,*::before,*::after{box-sizing:border-box}
     :root{
@@ -209,7 +210,7 @@
   }
   </script>
 
-  <script type="module">
+ <script type="text/babel" data-type="module">
     import React, { useState, useEffect, useContext, createContext, useRef, useCallback, useMemo } from 'react';
     import { createRoot } from 'react-dom/client';
     import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useLocation, Navigate, useParams } from 'react-router-dom';
