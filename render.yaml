@@ -27,6 +27,16 @@ services:
       - key: MAIL_DEFAULT_SENDER
         sync: false
 
+  - type: static
+    name: timetable-frontend
+    plan: free
+    buildCommand: echo "Static site – no build required"
+    staticPublishPath: ./
+    headers:
+      - path: /*
+        name: Cache-Control
+        value: no-cache
+
 databases:
   - name: timetable-db
     plan: free
