@@ -49,10 +49,17 @@ def create_app():
     app.register_blueprint(timetable_bp, url_prefix='/api/timetable')
     app.register_blueprint(extra_bp, url_prefix='/api')
 
-    with app.app_context():
+   with app.app_context():
         db.create_all()
         seed_super_admin()
-
+    # Serve index.html for root and all non-API routes
+    @app.route('/', defaults={'path': ''})
+    @app.route('/<path:path>')
+    def serve_frontend(path):
+        if path.startswith('api/') or path == 'healthz':
+            from flask import abort
+            abort(404)
+        return send_file(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'index.html'))
     return app
 
 # ---------- Database Models ----------
