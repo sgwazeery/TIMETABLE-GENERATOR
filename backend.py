@@ -36,12 +36,6 @@ def create_app():
         JWT_SECRET_KEY=os.environ.get('JWT_SECRET_KEY', secrets.token_hex(32)),
         JWT_ACCESS_TOKEN_EXPIRES=datetime.timedelta(hours=1),
         JWT_REFRESH_TOKEN_EXPIRES=datetime.timedelta(days=30),
-        MAIL_SERVER=os.environ.get('MAIL_SERVER', 'smtp.gmail.com'),
-        MAIL_PORT=int(os.environ.get('MAIL_PORT', 587)),
-        MAIL_USE_TLS=os.environ.get('MAIL_USE_TLS', 'true').lower() == 'true',
-        MAIL_USERNAME=os.environ.get('MAIL_USERNAME', ''),
-        MAIL_PASSWORD=os.environ.get('MAIL_PASSWORD', ''),
-        MAIL_DEFAULT_SENDER=os.environ.get('MAIL_DEFAULT_SENDER', 'noreply@timetable.com'),
         TOKEN_SALT=os.environ.get('TOKEN_SALT', 'email-verify'),
     )
     CORS(app, resources={r"/api/*": {"origins": "*"}})
@@ -53,6 +47,7 @@ def create_app():
     app.register_blueprint(admin_bp, url_prefix='/api/admin')
     app.register_blueprint(institution_bp, url_prefix='/api/institution')
     app.register_blueprint(timetable_bp, url_prefix='/api/timetable')
+    app.register_blueprint(app_bp, url_prefix='/api')
 
     with app.app_context():
         db.create_all()
@@ -257,6 +252,7 @@ def inst_query(model):
 
 # ---------- Auth Blueprint ----------
 auth_bp = Blueprint('auth', __name__)
+app_bp = Blueprint('app', __name__)
 
 @auth_bp.route('/register', methods=['POST'])
 def register():
@@ -271,7 +267,8 @@ def register():
         email=data['email'],
         first_name=data.get('first_name', ''),
         last_name=data.get('last_name', ''),
-        role='student'
+        role='student',
+        is_verified=True
     )
     user.set_password(data['password'])
     db.session.add(user)
@@ -287,8 +284,6 @@ def login():
     user = User.query.filter_by(email=email).first()
     if not user or not user.check_password(password):
         return jsonify({"msg": "Invalid email or password"}), 401
-    if not user.is_verified:
-        return jsonify({"msg": "Email not verified"}), 403
     access_token = create_access_token(identity=user.id, additional_claims={'role': user.role})
     refresh_token = create_refresh_token(identity=user.id)
     log_audit('user_login', user.id)
@@ -308,6 +303,14 @@ def verify_email(token):
     db.session.commit()
     return jsonify({"msg": "Email verified successfully"}), 200
 
+@auth_bp.route('/me', methods=['GET'])
+@jwt_required()
+def me():
+    user = User.query.get(get_jwt_identity())
+    if not user:
+        return jsonify({"msg": "User not found"}), 404
+    return jsonify({"user": user.to_dict()}), 200
+
 @auth_bp.route('/refresh', methods=['POST'])
 @jwt_required(refresh=True)
 def refresh():
@@ -326,17 +329,7 @@ def forgot_password():
     if user:
         serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
         token = serializer.dumps(email, salt='password-reset')
-        if app.config.get('MAIL_USERNAME'):
-            from flask_mail import Message, Mail
-            mail = Mail()
-            reset_url = f"{request.host_url}api/auth/reset-password/{token}"
-            msg = Message("Password Reset", recipients=[email])
-            msg.body = f"Reset link: {reset_url}"
-            try:
-                mail.send(msg)
-            except:
-                pass
-        return jsonify({"msg": "If email exists, a reset link has been sent.", "reset_token": token}), 200
+        return jsonify({"msg": "Password reset token generated.", "reset_token": token}), 200
     return jsonify({"msg": "If email exists, a reset link has been sent."}), 200
 
 @auth_bp.route('/reset-password/<token>', methods=['POST'])
@@ -354,6 +347,60 @@ def reset_password(token):
     user.set_password(new_password)
     db.session.commit()
     return jsonify({"msg": "Password reset successful"}), 200
+
+@app_bp.route('/audit-logs', methods=['GET'])
+@role_required('super_admin', 'institution_admin')
+def audit_logs():
+    audits = AuditLog.query.order_by(AuditLog.timestamp.desc()).limit(200).all()
+    return jsonify([{
+        'id': a.id,
+        'user': f"{a.user.first_name} {a.user.last_name}" if a.user else None,
+        'action': a.action,
+        'details': a.details,
+        'timestamp': str(a.timestamp)
+    } for a in audits]), 200
+
+@app_bp.route('/analytics/summary', methods=['GET'])
+@jwt_required()
+def analytics_summary():
+    venue_counts = db.session.query(Venue.code, db.func.count(TimetableSlot.id)).join(TimetableSlot, TimetableSlot.venue_id == Venue.id).group_by(Venue.code).all()
+    venue_utilization = [{'name': code, 'utilization': min(int(count * 10), 100)} for code, count in venue_counts]
+    lecturer_workload = db.session.query(User.first_name, User.last_name, db.func.count(TimetableSlot.id)).join(Lecturer, Lecturer.user_id == User.id).join(TimetableSlot, TimetableSlot.lecturer_id == Lecturer.id).group_by(User.id).all()
+    lecturer_workload = [{'name': f"{first} {last}", 'hours': int(count)} for first, last, count in lecturer_workload]
+    quality_trend = [{'date': str(g.created_at.date()), 'score': int(g.quality_score)} for g in TimetableGeneration.query.order_by(TimetableGeneration.created_at.desc()).limit(6).all()][::-1]
+    return jsonify({
+        'venueUtilization': venue_utilization,
+        'lecturerWorkload': lecturer_workload,
+        'qualityTrend': quality_trend
+    }), 200
+
+@app_bp.route('/reports/<report_type>', methods=['GET'])
+@role_required('super_admin', 'institution_admin')
+def reports(report_type):
+    if report_type == 'lecturer_workload':
+        workload = db.session.query(User.first_name, User.last_name, db.func.count(TimetableSlot.id)).join(Lecturer, Lecturer.user_id == User.id).join(TimetableSlot, TimetableSlot.lecturer_id == Lecturer.id).group_by(User.id).all()
+        return jsonify([{'Lecturer': f"{first} {last}", 'Hours': int(count)} for first, last, count in workload]), 200
+    if report_type == 'venue_utilization':
+        venue_counts = db.session.query(Venue.code, db.func.count(TimetableSlot.id)).join(TimetableSlot, TimetableSlot.venue_id == Venue.id).group_by(Venue.code).all()
+        return jsonify([{'Venue': code, 'Bookings': int(count)} for code, count in venue_counts]), 200
+    if report_type == 'course_allocation':
+        course_counts = db.session.query(Course.code, Course.title, db.func.count(TimetableSlot.id)).join(TimetableSlot, TimetableSlot.course_id == Course.id).group_by(Course.id).all()
+        return jsonify([{'Course': code, 'Title': title, 'Sessions': int(count)} for code, title, count in course_counts]), 200
+    if report_type == 'conflict':
+        return jsonify([]), 200
+    return jsonify({'msg': 'Report type not found'}), 404
+
+@app_bp.route('/notifications', methods=['GET'])
+@jwt_required()
+def notifications():
+    user_id = get_jwt_identity()
+    notes = Notification.query.filter_by(user_id=user_id).order_by(Notification.created_at.desc()).all()
+    return jsonify([{
+        'id': n.id,
+        'message': n.message,
+        'is_read': n.is_read,
+        'created_at': str(n.created_at)
+    } for n in notes]), 200
 
 # ---------- Admin Blueprint (Super Admin) ----------
 admin_bp = Blueprint('admin', __name__)

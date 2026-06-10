@@ -15,16 +15,80 @@
   <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
   <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    body {
+      min-height: 100vh;
+      margin: 0;
+      background: radial-gradient(circle at top left, rgba(59, 130, 246, 0.16), transparent 30%),
+                  radial-gradient(circle at bottom right, rgba(16, 185, 129, 0.14), transparent 28%),
+                  linear-gradient(180deg, #020617 0%, #111827 100%);
+      color: #e2e8f0;
+      background-attachment: fixed;
+    }
     .sidebar::-webkit-scrollbar { width: 6px; }
-    .sidebar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-    .dark .sidebar::-webkit-scrollbar-thumb { background: #475569; }
-    /* Shadcn-like styles */
-    .btn { @apply inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50; }
-    .btn-primary { @apply bg-blue-600 text-white hover:bg-blue-700; }
-    .btn-secondary { @apply bg-gray-200 text-gray-900 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-100; }
-    .btn-danger { @apply bg-red-600 text-white hover:bg-red-700; }
-    .input { @apply flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100; }
-    .card { @apply rounded-lg border bg-white shadow dark:bg-gray-800 dark:border-gray-700; }
+    .sidebar::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.7); border-radius: 9999px; }
+    .dark .sidebar::-webkit-scrollbar-thumb { background: rgba(100, 116, 139, 0.8); }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 9999px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      transition: all 0.2s ease;
+      box-shadow: 0 12px 24px rgba(15, 23, 42, 0.12);
+      border: 1px solid transparent;
+      cursor: pointer;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #2563eb, #0ea5e9);
+      color: #ffffff;
+    }
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      background: linear-gradient(135deg, #1d4ed8, #0284c7);
+    }
+    .btn-secondary {
+      background: rgba(255,255,255,0.08);
+      color: #cbd5e1;
+      border-color: rgba(148, 163, 184, 0.2);
+    }
+    .btn-secondary:hover {
+      background: rgba(255,255,255,0.12);
+    }
+    .btn-danger {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: white;
+    }
+    .input {
+      width: 100%;
+      min-height: 44px;
+      border-radius: 16px;
+      border: 1px solid rgba(148, 163, 184, 0.24);
+      background: rgba(15, 23, 42, 0.82);
+      padding: 0.85rem 1rem;
+      color: #e2e8f0;
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .input:focus {
+      border-color: rgba(59, 130, 246, 0.65);
+      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
+    }
+    .card {
+      border-radius: 32px;
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      background: rgba(15, 23, 42, 0.88);
+      box-shadow: 0 35px 80px rgba(15, 23, 42, 0.24);
+      backdrop-filter: blur(18px);
+    }
+    .section-title {
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+    }
   </style>
 </head>
 <body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen">
@@ -194,18 +258,24 @@
       };
 
       return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-800">
-          <div className="card p-8 w-full max-w-md">
-            <h2 className="text-2xl font-bold mb-6 text-center">Sign In</h2>
-            {error && <div className="mb-4 text-red-500 text-sm bg-red-100 dark:bg-red-900 p-2 rounded">{error}</div>}
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="card p-8 w-full max-w-md border border-white/10">
+            <div className="mb-6 text-center">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-3xl bg-gradient-to-br from-cyan-500 to-blue-600 text-white mx-auto mb-4 shadow-lg">
+                <i className="fas fa-calendar-check fa-lg"></i>
+              </div>
+              <h2 className="text-3xl font-semibold mb-2">Welcome Back</h2>
+              <p className="text-slate-400">Secure access to your timetable intelligence.</p>
+            </div>
+            {error && <div className="mb-4 text-rose-300 text-sm bg-rose-950/60 p-3 rounded-xl">{error}</div>}
             <form onSubmit={handleSubmit} className="space-y-4">
               <input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required className="input" />
               <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required className="input" />
-              <button type="submit" className="btn btn-primary w-full py-2">Login</button>
+              <button type="submit" className="btn btn-primary w-full py-3">Login</button>
             </form>
-            <div className="mt-4 text-center space-y-2">
-              <Link to="/register" className="text-blue-600 hover:underline block">Create account</Link>
-              <Link to="/forgot-password" className="text-sm text-gray-500 hover:underline">Forgot password?</Link>
+            <div className="mt-6 text-center space-y-2">
+              <Link to="/register" className="text-cyan-300 hover:text-cyan-100 block">Create account</Link>
+              <Link to="/forgot-password" className="text-slate-400 hover:text-slate-200 text-sm">Forgot password?</Link>
             </div>
           </div>
         </div>
@@ -228,7 +298,7 @@
           });
           const data = await res.json();
           if (!res.ok) throw new Error(data.msg || 'Registration failed');
-          addToast('Registration successful! Please check your email to verify.', 'success');
+          addToast('Registration successful! You can login now.', 'success');
           navigate('/login');
         } catch (err) { setError(err.message); }
       };
@@ -256,30 +326,45 @@
     function ForgotPasswordPage() {
       const [email, setEmail] = useState('');
       const [sent, setSent] = useState(false);
+      const [resetToken, setResetToken] = useState('');
       const { addToast } = useToast();
 
       const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-          await fetch(`${API_BASE}/auth/forgot-password`, {
+          const res = await fetch(`${API_BASE}/auth/forgot-password`, {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email })
           });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.msg || 'Request failed');
+          setResetToken(data.reset_token || '');
           setSent(true);
-          addToast('If the email exists, a reset link has been sent.', 'success');
+          addToast('Reset token generated successfully.', 'success');
         } catch (err) { addToast(err.message, 'error'); }
       };
 
       return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-800">
+        <div className="min-h-screen flex items-center justify-center">
           <div className="card p-8 w-full max-w-md">
-            <h2 className="text-2xl font-bold mb-4">Forgot Password</h2>
+            <h2 className="text-3xl font-bold mb-4 section-title">Reset Password</h2>
             {sent ? (
-              <p className="text-green-600">Check your email for the reset link.</p>
+              <div className="space-y-4">
+                <p className="text-green-300">A reset token has been generated for your account.</p>
+                {resetToken && (
+                  <div className="rounded-2xl bg-slate-950 p-4 text-sm text-slate-200 border border-slate-700">
+                    <div className="font-semibold mb-2">Reset Token</div>
+                    <pre className="whitespace-break-spaces break-all">{resetToken}</pre>
+                  </div>
+                )}
+                <p className="text-slate-400">Use this token on the reset password page.</p>
+                <Link to="/login" className="btn btn-secondary w-full py-2 text-center">Back to Login</Link>
+              </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
+                <p className="text-slate-300">Enter your email to generate a password reset token.</p>
                 <input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required className="input" />
-                <button type="submit" className="btn btn-primary w-full py-2">Send Reset Link</button>
+                <button type="submit" className="btn btn-primary w-full py-2">Generate Reset Token</button>
               </form>
             )}
           </div>
@@ -324,7 +409,6 @@
     function VerifyEmailPage() {
       const { token } = useParams();
       const [status, setStatus] = useState('verifying');
-      const navigate = useNavigate();
 
       useEffect(() => {
         fetch(`${API_BASE}/auth/verify-email/${token}`)
@@ -334,10 +418,10 @@
 
       return (
         <div className="min-h-screen flex items-center justify-center">
-          <div className="card p-8 text-center">
-            {status === 'verifying' && <p><i className="fas fa-spinner fa-spin"></i> Verifying...</p>}
-            {status === 'success' && <><p className="text-green-600 text-xl">Email verified!</p><Link to="/login" className="btn btn-primary mt-4 inline-block">Login</Link></>}
-            {status === 'error' && <p className="text-red-600">Invalid or expired token.</p>}
+          <div className="card p-8 text-center max-w-sm">
+            {status === 'verifying' && <p className="text-slate-300"><i className="fas fa-spinner fa-spin"></i> Validating token...</p>}
+            {status === 'success' && <><p className="text-emerald-300 text-xl font-semibold">Verification completed.</p><p className="mt-2 text-slate-400">Your account is ready to use.</p><Link to="/login" className="btn btn-primary mt-4 inline-block">Go to Login</Link></>}
+            {status === 'error' && <p className="text-rose-300">That link is invalid or expired.</p>}
           </div>
         </div>
       );
@@ -386,10 +470,10 @@
       return (
         <div className="flex h-screen">
           {/* Sidebar */}
-          <div className={`${sidebarOpen ? 'w-64' : 'w-20'} bg-gray-800 text-white transition-all duration-300 overflow-y-auto sidebar`}>
+          <div className={`${sidebarOpen ? 'w-64' : 'w-20'} bg-slate-950/95 text-slate-100 transition-all duration-300 overflow-y-auto sidebar border-r border-white/10`}>
             <div className="p-4 flex justify-between items-center">
-              {sidebarOpen && <h2 className="text-xl font-bold">Timetable</h2>}
-              <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-white">
+              {sidebarOpen && <h2 className="text-xl font-semibold tracking-tight">Timetable</h2>}
+              <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-slate-200 hover:text-white">
                 <i className={`fas ${sidebarOpen ? 'fa-times' : 'fa-bars'}`}></i>
               </button>
             </div>
@@ -404,13 +488,13 @@
           </div>
           {/* Main */}
           <div className="flex-1 flex flex-col overflow-hidden">
-            <header className="bg-white dark:bg-gray-800 shadow p-4 flex justify-between items-center">
-              <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-xl lg:hidden">
+            <header className="bg-slate-950/80 backdrop-blur-xl shadow-[0_25px_50px_-25px_rgba(15,23,42,0.7)] p-4 flex justify-between items-center border-b border-white/10">
+              <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-xl lg:hidden text-slate-200 hover:text-white">
                 <i className="fas fa-bars"></i>
               </button>
               <div className="flex items-center space-x-4 ml-auto">
-                <button onClick={toggleTheme} className="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700">
-                  <i className={`fas ${theme === 'dark' ? 'fa-sun' : 'fa-moon'}`}></i>
+                <button onClick={toggleTheme} className="p-2 rounded-full bg-slate-900/70 border border-white/10 hover:bg-slate-800">
+                  <i className={`fas ${theme === 'dark' ? 'fa-sun' : 'fa-moon'} text-slate-200`}></i>
                 </button>
                 {/* Notification Bell */}
                 <div className="relative">
