@@ -1,7 +1,7 @@
 # backend.py – Complete: Auth, Academic Hierarchy, AI Timetable Engine, Exports
 import os, datetime, logging, re, json, io, csv
 from functools import wraps
-from flask import Flask, request, jsonify, g, Blueprint, send_file
+from flask import Flask, request, jsonify, g, Blueprint, send_file, send_from_directory
 from flask_cors import CORS
 from flask_jwt_extended import (
     JWTManager, create_access_token, create_refresh_token,
@@ -48,6 +48,14 @@ def create_app():
     app.register_blueprint(institution_bp, url_prefix='/api/institution')
     app.register_blueprint(timetable_bp, url_prefix='/api/timetable')
     app.register_blueprint(app_bp, url_prefix='/api')
+
+    # Serve frontend (index.html) and static assets
+    @app.route('/', defaults={'path': ''})
+    @app.route('/<path:path>')
+    def serve_frontend(path):
+        if path != '' and os.path.exists(os.path.join(app.root_path, path)):
+            return send_from_directory(app.root_path, path)
+        return send_from_directory(app.root_path, 'index.html')
 
     with app.app_context():
         db.create_all()
