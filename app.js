@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useContext, createContext, useRef, useCallback, useMemo } from 'react';
-import { createRoot } from 'react-dom/client';
-import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useLocation, Navigate, useParams, useSearchParams } from 'react-router-dom';
-import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
-import { QueryClient, QueryClientProvider, useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { create } from 'zustand';
+import React, { useState, useEffect, useContext, createContext, useRef, useCallback, useMemo } from 'https://cdn.jsdelivr.net/npm/react@18.2.0/+esm';
+import { createRoot } from 'https://cdn.jsdelivr.net/npm/react-dom@18.2.0/client/+esm';
+import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useLocation, Navigate, useParams, useSearchParams } from 'https://cdn.jsdelivr.net/npm/react-router-dom@6.20.0/+esm';
+import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'https://cdn.jsdelivr.net/npm/recharts@2.10.3/+esm';
+import jsPDF from 'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/+esm';
+import html2canvas from 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/+esm';
+import { QueryClient, QueryClientProvider, useQuery, useMutation, useQueryClient } from 'https://cdn.jsdelivr.net/npm/@tanstack/react-query@5.17.19/+esm';
+import { create } from 'https://cdn.jsdelivr.net/npm/zustand@4.4.7/+esm';
 
 // ---------- Constants ----------
 
