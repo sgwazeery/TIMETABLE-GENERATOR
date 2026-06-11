@@ -1,7 +1,7 @@
 # backend.py – Complete: Auth, Academic Hierarchy, AI Timetable Engine, Exports
 import os, datetime, logging, re, json, io, csv
 from functools import wraps
-from flask import Flask, request, jsonify, g, Blueprint, send_file
+from flask import Flask, request, jsonify, g, Blueprint, send_file, send_from_directory
 from flask_cors import CORS
 from flask_jwt_extended import (
     JWTManager, create_access_token, create_refresh_token,
@@ -28,7 +28,7 @@ jwt = JWTManager()
 
 # ---------- App Factory ----------
 def create_app():
-    app = Flask(__name__)
+    app = Flask(__name__, static_folder='.', static_url_path='')
     app.config.update(
         SECRET_KEY=os.environ.get('SECRET_KEY', secrets.token_hex(32)),
         SQLALCHEMY_DATABASE_URI=os.environ.get('DATABASE_URL', 'postgresql://localhost/timetable'),
@@ -48,6 +48,17 @@ def create_app():
     app.register_blueprint(institution_bp, url_prefix='/api/institution')
     app.register_blueprint(timetable_bp, url_prefix='/api/timetable')
     app.register_blueprint(misc_bp, url_prefix='/api')
+
+    @app.route('/')
+    def serve_index():
+        return send_from_directory('.', 'index.html')
+
+    @app.route('/<path:path>')
+    def serve_static(path):
+        try:
+            return send_from_directory('.', path)
+        except:
+            return send_from_directory('.', 'index.html')
 
     with app.app_context():
         db.create_all()
