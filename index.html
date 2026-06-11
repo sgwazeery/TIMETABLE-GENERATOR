@@ -11,7 +11,8 @@
       theme: { extend: {} }
     }
   </script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-VCSQM4+T9QoKr74IUMJ9bHCa1eAQHd2Y8y4fBhBRDqE+jgTkYE3bW3PJIWKFBVt+fWcNP/OznBJJKBnbPElA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <style>
     .sidebar::-webkit-scrollbar { width: 6px; }
     .sidebar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
@@ -48,20 +49,22 @@
 <body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen">
   <div id="root"></div>
 
- <script type="importmap">
+<script type="importmap">
     {
       "imports": {
-        "react": "https://esm.sh/react@18.2.0?bundle",
-        "react-dom/client": "https://esm.sh/react-dom@18.2.0/client?bundle",
-        "react-router-dom": "https://esm.sh/react-router-dom@6.20.0?bundle&deps=react@18.2.0",
-        "recharts": "https://esm.sh/recharts@2.10.3?bundle&deps=react@18.2.0",
-        "@tanstack/react-query": "https://esm.sh/@tanstack/react-query@5.17.19?bundle&deps=react@18.2.0",
-        "zustand": "https://esm.sh/zustand@4.4.7?bundle&deps=react@18.2.0"
+        "react": "https://esm.sh/react@18.2.0",
+        "react/jsx-runtime": "https://esm.sh/react@18.2.0/jsx-runtime",
+        "react-dom": "https://esm.sh/react-dom@18.2.0",
+        "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+        "react-router-dom": "https://esm.sh/react-router-dom@6.20.0",
+        "recharts": "https://esm.sh/recharts@2.10.3",
+        "@tanstack/react-query": "https://esm.sh/@tanstack/react-query@5.17.19",
+        "zustand": "https://esm.sh/zustand@4.4.7"
       }
     }
   </script>
 
-  <script type="module">
+  <script type="text/babel" data-type="module" data-presets="react">
     import React, { useState, useEffect, useContext, createContext, useRef, useCallback, useMemo } from 'react';
     import { createRoot } from 'react-dom/client';
     import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useLocation, Navigate, useParams } from 'react-router-dom';
