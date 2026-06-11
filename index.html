@@ -15,8 +15,7 @@
   <script src="https://unpkg.com/history@5.3.0/umd/history.production.min.js"></script>
   <script src="https://unpkg.com/react-router@6.20.0/dist/umd/react-router.production.min.js"></script>
   <script src="https://unpkg.com/react-router-dom@6.20.0/dist/umd/react-router-dom.production.min.js"></script>
-  <script src="https://unpkg.com/lodash@4.17.21/lodash.min.js"></script>
-  <script src="https://unpkg.com/recharts@2.10.3/umd/Recharts.js"></script>
+ <script src="https://unpkg.com/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://unpkg.com/@tanstack/react-query@5.17.19/build/umd/index.production.js"></script>
   <script src="https://unpkg.com/zustand@4.4.7/umd/zustand.production.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -61,7 +60,98 @@
     const { useState, useEffect, useContext, createContext, useRef, useCallback, useMemo } = React;
     const { createRoot } = window.ReactDOM;
     const { BrowserRouter: Router, Routes, Route, Link, useNavigate, useLocation, Navigate, useParams } = window.ReactRouterDOM;
-    const { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } = window.Recharts;
+   const ChartJS = window.Chart;
+
+    // Recharts-compatible wrapper components using Chart.js
+    function ResponsiveContainer({ children, width, height }) {
+      return <div style={{ width: width || '100%', height: height || 300 }}>{children}</div>;
+    }
+
+    function BarChart({ data, children, width, height }) {
+      const canvasRef = useRef(null);
+      const chartRef = useRef(null);
+      useEffect(() => {
+        if (!canvasRef.current || !data) return;
+        if (chartRef.current) chartRef.current.destroy();
+        const labels = data.map(d => d.name || d.date || '');
+        const childArr = Array.isArray(children) ? children.flat() : [children];
+        const bars = childArr.filter(c => c && c.type === Bar);
+        const datasets = bars.map(b => ({
+          label: b.props.dataKey,
+          data: data.map(d => d[b.props.dataKey] ?? 0),
+          backgroundColor: b.props.fill || '#3b82f6',
+          borderRadius: 4,
+        }));
+        chartRef.current = new ChartJS(canvasRef.current, {
+          type: 'bar', data: { labels, datasets },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: datasets.length > 1 } } }
+        });
+        return () => chartRef.current?.destroy();
+      }, [JSON.stringify(data)]);
+      return <canvas ref={canvasRef} style={{ width: '100%', height: '100%' }} />;
+    }
+
+    function LineChart({ data, children, width, height }) {
+      const canvasRef = useRef(null);
+      const chartRef = useRef(null);
+      useEffect(() => {
+        if (!canvasRef.current || !data) return;
+        if (chartRef.current) chartRef.current.destroy();
+        const labels = data.map(d => d.name || d.date || '');
+        const childArr = Array.isArray(children) ? children.flat() : [children];
+        const lines = childArr.filter(c => c && c.type === Line);
+        const datasets = lines.map(l => ({
+          label: l.props.dataKey,
+          data: data.map(d => d[l.props.dataKey] ?? 0),
+          borderColor: l.props.stroke || '#8b5cf6',
+          backgroundColor: 'transparent',
+          borderWidth: 2,
+          pointRadius: 4,
+          tension: 0.3,
+        }));
+        chartRef.current = new ChartJS(canvasRef.current, {
+          type: 'line', data: { labels, datasets },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { min: 0, max: 100 } } }
+        });
+        return () => chartRef.current?.destroy();
+      }, [JSON.stringify(data)]);
+      return <canvas ref={canvasRef} style={{ width: '100%', height: '100%' }} />;
+    }
+
+    function PieChart({ children, width, height }) {
+      const canvasRef = useRef(null);
+      const chartRef = useRef(null);
+      const childArr = Array.isArray(children) ? children.flat() : [children];
+      const pieChild = childArr.find(c => c && c.type === Pie);
+      const data = pieChild?.props?.data || [];
+      const nameKey = pieChild?.props?.nameKey || 'name';
+      const dataKey = pieChild?.props?.dataKey || 'value';
+      useEffect(() => {
+        if (!canvasRef.current || !data.length) return;
+        if (chartRef.current) chartRef.current.destroy();
+        chartRef.current = new ChartJS(canvasRef.current, {
+          type: 'pie',
+          data: {
+            labels: data.map(d => d[nameKey]),
+            datasets: [{ data: data.map(d => d[dataKey]), backgroundColor: COLORS }]
+          },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12 } } } }
+        });
+        return () => chartRef.current?.destroy();
+      }, [JSON.stringify(data)]);
+      return <canvas ref={canvasRef} style={{ width: '100%', height: '100%' }} />;
+    }
+
+    // Stub components (consumed by parent chart components above, not rendered directly)
+    function Bar() { return null; }
+    function Line() { return null; }
+    function Pie() { return null; }
+    function Cell() { return null; }
+    function XAxis() { return null; }
+    function YAxis() { return null; }
+    function CartesianGrid() { return null; }
+    function Tooltip() { return null; }
+    function Legend() { return null; }
     const { QueryClient, QueryClientProvider, useQuery, useMutation, useQueryClient } = window.TanStackQueryCore;
     const { create } = window.zustand;
 
