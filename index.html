@@ -6,12 +6,16 @@
   <title>Automated Timetable Generator</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: { extend: {} }
-    }
+    tailwind.config = { darkMode: 'class', theme: { extend: {} } }
   </script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <!-- Load all libraries as globals via UMD — no importmap, no module conflicts -->
+  <script crossorigin src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/react-router-dom@6.20.0/dist/umd/react-router-dom.production.min.js"></script>
+  <script src="https://unpkg.com/recharts@2.10.3/umd/Recharts.js"></script>
+  <script src="https://unpkg.com/@tanstack/react-query@5.17.19/build/umd/index.production.js"></script>
+  <script src="https://unpkg.com/zustand@4.4.7/umd/zustand.production.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <style>
     .sidebar::-webkit-scrollbar { width: 6px; }
@@ -49,28 +53,14 @@
 <body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen">
   <div id="root"></div>
 
-<script type="importmap">
-    {
-      "imports": {
-        "react": "https://esm.sh/react@18.2.0?dev",
-        "react/jsx-runtime": "https://esm.sh/react@18.2.0/jsx-runtime?dev",
-        "react-dom": "https://esm.sh/react-dom@18.2.0?dev",
-        "react-dom/client": "https://esm.sh/react-dom@18.2.0/client?dev",
-        "react-router-dom": "https://esm.sh/react-router-dom@6.20.0?deps=react@18.2.0,react-dom@18.2.0",
-        "recharts": "https://esm.sh/recharts@2.10.3?deps=react@18.2.0,react-dom@18.2.0",
-        "@tanstack/react-query": "https://esm.sh/@tanstack/react-query@5.17.19?deps=react@18.2.0,react-dom@18.2.0",
-        "zustand": "https://esm.sh/zustand@4.4.7?deps=react@18.2.0"
-      }
-    }
-  </script>
-
-  <script type="text/babel" data-type="module" data-presets="react" data-plugins="transform-react-jsx">
-    import React, { useState, useEffect, useContext, createContext, useRef, useCallback, useMemo } from 'react';
-    import { createRoot } from 'react-dom/client';
-    import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useLocation, Navigate, useParams } from 'react-router-dom';
-    import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-    import { QueryClient, QueryClientProvider, useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-    import { create } from 'zustand';
+<script type="text/babel" data-presets="react">
+    const React = window.React;
+    const { useState, useEffect, useContext, createContext, useRef, useCallback, useMemo } = React;
+    const { createRoot } = window.ReactDOM;
+    const { BrowserRouter: Router, Routes, Route, Link, useNavigate, useLocation, Navigate, useParams } = window.ReactRouterDOM;
+    const { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } = window.Recharts;
+    const { QueryClient, QueryClientProvider, useQuery, useMutation, useQueryClient } = window.ReactQuery;
+    const { create } = window.zustand;
 
     // ---------- Constants ----------
     const API_BASE = window.location.origin + '/api';
