@@ -12,7 +12,10 @@
   <!-- Load all libraries as globals via UMD — no importmap, no module conflicts -->
   <script crossorigin src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/history@5.3.0/umd/history.production.min.js"></script>
+  <script src="https://unpkg.com/react-router@6.20.0/dist/umd/react-router.production.min.js"></script>
   <script src="https://unpkg.com/react-router-dom@6.20.0/dist/umd/react-router-dom.production.min.js"></script>
+  <script src="https://unpkg.com/lodash@4.17.21/lodash.min.js"></script>
   <script src="https://unpkg.com/recharts@2.10.3/umd/Recharts.js"></script>
   <script src="https://unpkg.com/@tanstack/react-query@5.17.19/build/umd/index.production.js"></script>
   <script src="https://unpkg.com/zustand@4.4.7/umd/zustand.production.js"></script>
@@ -54,12 +57,12 @@
   <div id="root"></div>
 
 <script type="text/babel" data-presets="react">
-    const React = window.React;
+   const React = window.React;
     const { useState, useEffect, useContext, createContext, useRef, useCallback, useMemo } = React;
     const { createRoot } = window.ReactDOM;
     const { BrowserRouter: Router, Routes, Route, Link, useNavigate, useLocation, Navigate, useParams } = window.ReactRouterDOM;
     const { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } = window.Recharts;
-    const { QueryClient, QueryClientProvider, useQuery, useMutation, useQueryClient } = window.ReactQuery;
+    const { QueryClient, QueryClientProvider, useQuery, useMutation, useQueryClient } = window.TanStackQueryCore;
     const { create } = window.zustand;
 
     // ---------- Constants ----------
