@@ -49,7 +49,7 @@ def create_app():
     app.register_blueprint(timetable_bp, url_prefix='/api/timetable')
     app.register_blueprint(misc_bp, url_prefix='/api')
 
-   @app.route('/')
+    @app.route('/')
     def serve_index():
         return send_from_directory('.', 'index.html')
 
