@@ -4,179 +4,98 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Automated Timetable Generator</title>
+
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = { darkMode: 'class', theme: { extend: {} } }
   </script>
+
+  <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
-  <!-- Load all libraries as globals via UMD — no importmap, no module conflicts -->
+
+  <!-- UMD Libraries — ORDER MATTERS: React first, then everything that depends on it -->
   <script crossorigin src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/history@5.3.0/umd/history.production.min.js"></script>
-  <script src="https://unpkg.com/react-router@6.20.0/dist/umd/react-router.production.min.js"></script>
   <script src="https://unpkg.com/react-router-dom@6.20.0/dist/umd/react-router-dom.production.min.js"></script>
- <script src="https://unpkg.com/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://unpkg.com/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://unpkg.com/@tanstack/react-query@5.17.19/build/umd/index.production.js"></script>
   <script src="https://unpkg.com/zustand@4.4.7/umd/zustand.production.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- Babel for JSX transformation -->
+  <script src="https://unpkg.com/@babel/standalone@7.23.6/babel.min.js"></script>
+
   <style>
     .sidebar::-webkit-scrollbar { width: 6px; }
     .sidebar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
     .dark .sidebar::-webkit-scrollbar-thumb { background: #475569; }
-    .btn { display:inline-flex; align-items:center; justify-content:center; border-radius:0.375rem; font-size:0.875rem; font-weight:500; transition:all 0.15s; cursor:pointer; border:none; outline:none; }
-    .btn:disabled { opacity:0.5; pointer-events:none; }
-    .btn-primary { background:#2563eb; color:#fff; padding:0.5rem 1rem; }
+    .btn { display:inline-flex;align-items:center;justify-content:center;border-radius:0.375rem;font-size:0.875rem;font-weight:500;transition:all 0.15s;cursor:pointer;border:none;outline:none; }
+    .btn:disabled { opacity:0.5;pointer-events:none; }
+    .btn-primary { background:#2563eb;color:#fff;padding:0.5rem 1rem; }
     .btn-primary:hover { background:#1d4ed8; }
-    .btn-secondary { background:#e5e7eb; color:#111827; padding:0.5rem 1rem; }
+    .btn-secondary { background:#e5e7eb;color:#111827;padding:0.5rem 1rem; }
     .btn-secondary:hover { background:#d1d5db; }
-    .btn-danger { background:#dc2626; color:#fff; padding:0.5rem 1rem; }
-    .btn-danger:hover { background:#b91c1c; }
-    .btn-success { background:#16a34a; color:#fff; padding:0.5rem 1rem; }
+    .btn-danger { background:#dc2626;color:#fff;padding:0.5rem 1rem; }
+    .btn-success { background:#16a34a;color:#fff;padding:0.5rem 1rem; }
     .btn-success:hover { background:#15803d; }
-    .dark .btn-secondary { background:#374151; color:#f3f4f6; }
-    .dark .btn-secondary:hover { background:#4b5563; }
-    .input { display:flex; height:2.5rem; width:100%; border-radius:0.375rem; border:1px solid #d1d5db; background:#fff; padding:0 0.75rem; font-size:0.875rem; outline:none; transition:border 0.15s; }
-    .input:focus { border-color:#3b82f6; box-shadow:0 0 0 2px rgba(59,130,246,0.2); }
-    .dark .input { border-color:#4b5563; background:#1f2937; color:#f9fafb; }
-    .card { border-radius:0.5rem; border:1px solid #e5e7eb; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,0.1); }
-    .dark .card { background:#1f2937; border-color:#374151; }
-    .stat-card { border-radius:0.75rem; padding:1.5rem; display:flex; align-items:center; gap:1rem; }
-    .modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index:50; }
-    .nav-link { display:flex; align-items:center; padding:0.75rem 1rem; transition:background 0.15s; color:#d1d5db; text-decoration:none; }
-    .nav-link:hover { background:#374151; color:#fff; }
-    .nav-link.active { background:#1d4ed8; color:#fff; }
-    .badge { display:inline-flex; align-items:center; border-radius:9999px; padding:0.125rem 0.625rem; font-size:0.75rem; font-weight:500; }
-    .badge-success { background:#dcfce7; color:#16a34a; }
-    .badge-warning { background:#fef9c3; color:#ca8a04; }
-    .badge-info { background:#dbeafe; color:#1d4ed8; }
-    .badge-danger { background:#fee2e2; color:#dc2626; }
+    .dark .btn-secondary { background:#374151;color:#f3f4f6; }
+    .input { display:flex;height:2.5rem;width:100%;border-radius:0.375rem;border:1px solid #d1d5db;background:#fff;padding:0 0.75rem;font-size:0.875rem;outline:none;transition:border 0.15s; }
+    .input:focus { border-color:#3b82f6;box-shadow:0 0 0 2px rgba(59,130,246,0.2); }
+    .dark .input { border-color:#4b5563;background:#1f2937;color:#f9fafb; }
+    .card { border-radius:0.5rem;border:1px solid #e5e7eb;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.1); }
+    .dark .card { background:#1f2937;border-color:#374151; }
+    .modal-backdrop { position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:50; }
+    .nav-link { display:flex;align-items:center;padding:0.75rem 1rem;transition:background 0.15s;color:#d1d5db;text-decoration:none; }
+    .nav-link:hover { background:#374151;color:#fff; }
+    .nav-link.active { background:#1d4ed8;color:#fff; }
+    .badge { display:inline-flex;align-items:center;border-radius:9999px;padding:0.125rem 0.625rem;font-size:0.75rem;font-weight:500; }
+    .badge-success { background:#dcfce7;color:#16a34a; }
+    .badge-warning { background:#fef9c3;color:#ca8a04; }
+    .badge-info { background:#dbeafe;color:#1d4ed8; }
+    .badge-danger { background:#fee2e2;color:#dc2626; }
   </style>
 </head>
 <body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen">
   <div id="root"></div>
 
-<script type="text/babel" data-presets="react">
-   const React = window.React;
+  <script type="text/babel" data-presets="react">
+    // ── Globals from UMD bundles ──────────────────────────────────────────────
+    const React = window.React;
     const { useState, useEffect, useContext, createContext, useRef, useCallback, useMemo } = React;
     const { createRoot } = window.ReactDOM;
     const { BrowserRouter: Router, Routes, Route, Link, useNavigate, useLocation, Navigate, useParams } = window.ReactRouterDOM;
-   const ChartJS = window.Chart;
+    const ChartJS = window.Chart;
 
-    // Recharts-compatible wrapper components using Chart.js
-    function ResponsiveContainer({ children, width, height }) {
-      return <div style={{ width: width || '100%', height: height || 300 }}>{children}</div>;
-    }
+    // TanStack React Query v5 — try both possible global names
+    const _rq = window.ReactQuery || window.TanStackReactQuery || window.tanstackReactQuery || {};
+    const { QueryClient, QueryClientProvider, useQuery, useMutation, useQueryClient } = _rq;
 
-    function BarChart({ data, children, width, height }) {
-      const canvasRef = useRef(null);
-      const chartRef = useRef(null);
-      useEffect(() => {
-        if (!canvasRef.current || !data) return;
-        if (chartRef.current) chartRef.current.destroy();
-        const labels = data.map(d => d.name || d.date || '');
-        const childArr = Array.isArray(children) ? children.flat() : [children];
-        const bars = childArr.filter(c => c && c.type === Bar);
-        const datasets = bars.map(b => ({
-          label: b.props.dataKey,
-          data: data.map(d => d[b.props.dataKey] ?? 0),
-          backgroundColor: b.props.fill || '#3b82f6',
-          borderRadius: 4,
-        }));
-        chartRef.current = new ChartJS(canvasRef.current, {
-          type: 'bar', data: { labels, datasets },
-          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: datasets.length > 1 } } }
-        });
-        return () => chartRef.current?.destroy();
-      }, [JSON.stringify(data)]);
-      return <canvas ref={canvasRef} style={{ width: '100%', height: '100%' }} />;
-    }
+    // Zustand — try both v4 shapes
+    const _zustand = window.zustand || {};
+    const zustandCreate = _zustand.create || _zustand.default || (() => () => ({}));
 
-    function LineChart({ data, children, width, height }) {
-      const canvasRef = useRef(null);
-      const chartRef = useRef(null);
-      useEffect(() => {
-        if (!canvasRef.current || !data) return;
-        if (chartRef.current) chartRef.current.destroy();
-        const labels = data.map(d => d.name || d.date || '');
-        const childArr = Array.isArray(children) ? children.flat() : [children];
-        const lines = childArr.filter(c => c && c.type === Line);
-        const datasets = lines.map(l => ({
-          label: l.props.dataKey,
-          data: data.map(d => d[l.props.dataKey] ?? 0),
-          borderColor: l.props.stroke || '#8b5cf6',
-          backgroundColor: 'transparent',
-          borderWidth: 2,
-          pointRadius: 4,
-          tension: 0.3,
-        }));
-        chartRef.current = new ChartJS(canvasRef.current, {
-          type: 'line', data: { labels, datasets },
-          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { min: 0, max: 100 } } }
-        });
-        return () => chartRef.current?.destroy();
-      }, [JSON.stringify(data)]);
-      return <canvas ref={canvasRef} style={{ width: '100%', height: '100%' }} />;
-    }
-
-    function PieChart({ children, width, height }) {
-      const canvasRef = useRef(null);
-      const chartRef = useRef(null);
-      const childArr = Array.isArray(children) ? children.flat() : [children];
-      const pieChild = childArr.find(c => c && c.type === Pie);
-      const data = pieChild?.props?.data || [];
-      const nameKey = pieChild?.props?.nameKey || 'name';
-      const dataKey = pieChild?.props?.dataKey || 'value';
-      useEffect(() => {
-        if (!canvasRef.current || !data.length) return;
-        if (chartRef.current) chartRef.current.destroy();
-        chartRef.current = new ChartJS(canvasRef.current, {
-          type: 'pie',
-          data: {
-            labels: data.map(d => d[nameKey]),
-            datasets: [{ data: data.map(d => d[dataKey]), backgroundColor: COLORS }]
-          },
-          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12 } } } }
-        });
-        return () => chartRef.current?.destroy();
-      }, [JSON.stringify(data)]);
-      return <canvas ref={canvasRef} style={{ width: '100%', height: '100%' }} />;
-    }
-
-    // Stub components (consumed by parent chart components above, not rendered directly)
-    function Bar() { return null; }
-    function Line() { return null; }
-    function Pie() { return null; }
-    function Cell() { return null; }
-    function XAxis() { return null; }
-    function YAxis() { return null; }
-    function CartesianGrid() { return null; }
-    function Tooltip() { return null; }
-    function Legend() { return null; }
-    const { QueryClient, QueryClientProvider, useQuery, useMutation, useQueryClient } = window.TanStackQueryCore;
-    const { create } = window.zustand;
-
-    // ---------- Constants ----------
+    // ── Constants ─────────────────────────────────────────────────────────────
     const API_BASE = window.location.origin + '/api';
     const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
-    const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
+    const COLORS = ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4'];
 
-    // ---------- Zustand Store ----------
-    const useStore = create((set, get) => ({
+    // ── Zustand Store ─────────────────────────────────────────────────────────
+    const useStore = zustandCreate((set, get) => ({
       user: null,
-      token: localStorage.getItem('token') || null,
-      theme: localStorage.getItem('theme') || 'light',
+      token: (() => { try { return localStorage.getItem('token'); } catch(e) { return null; } })(),
+      theme: (() => { try { return localStorage.getItem('theme') || 'light'; } catch(e) { return 'light'; } })(),
       login: (token, userData) => {
-        localStorage.setItem('token', token);
+        try { localStorage.setItem('token', token); } catch(e) {}
         set({ token, user: userData });
       },
       logout: () => {
-        localStorage.removeItem('token');
+        try { localStorage.removeItem('token'); } catch(e) {}
         set({ token: null, user: null });
       },
       setUser: (user) => set({ user }),
       toggleTheme: () => {
         const newTheme = get().theme === 'dark' ? 'light' : 'dark';
-        localStorage.setItem('theme', newTheme);
+        try { localStorage.setItem('theme', newTheme); } catch(e) {}
         document.documentElement.classList.toggle('dark', newTheme === 'dark');
         set({ theme: newTheme });
       },
@@ -186,16 +105,16 @@
       }
     }));
 
-    // ---------- Query Client ----------
-    const queryClient = new QueryClient({
+    // ── Query Client ──────────────────────────────────────────────────────────
+    const queryClient = QueryClient ? new QueryClient({
       defaultOptions: { queries: { staleTime: 60000, retry: 1 } }
-    });
+    }) : null;
 
-    // ---------- Auth API Helper ----------
+    // ── Auth API Helper ───────────────────────────────────────────────────────
     function useAuthApi() {
       const token = useStore(state => state.token);
       const logout = useStore(state => state.logout);
-      const fetchWithAuth = useCallback(async (url, options = {}) => {
+      return useCallback(async (url, options = {}) => {
         const headers = { 'Content-Type': 'application/json', ...options.headers };
         if (token) headers['Authorization'] = `Bearer ${token}`;
         const res = await fetch(`${API_BASE}${url}`, { ...options, headers });
@@ -206,10 +125,9 @@
         }
         return res.json();
       }, [token, logout]);
-      return fetchWithAuth;
     }
 
-    // ---------- Toast ----------
+    // ── Toast ─────────────────────────────────────────────────────────────────
     const ToastContext = createContext();
     function ToastProvider({ children }) {
       const [toasts, setToasts] = useState([]);
@@ -223,8 +141,8 @@
           {children}
           <div className="fixed top-4 right-4 z-50 space-y-2" style={{maxWidth:'360px'}}>
             {toasts.map(t => (
-              <div key={t.id} className={`px-4 py-3 rounded-lg shadow-lg text-white flex items-center gap-2 text-sm ${t.type === 'success' ? 'bg-green-600' : t.type === 'error' ? 'bg-red-600' : 'bg-blue-600'}`}>
-                <i className={`fas ${t.type === 'success' ? 'fa-check-circle' : t.type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}`}></i>
+              <div key={t.id} className={`px-4 py-3 rounded-lg shadow-lg text-white flex items-center gap-2 text-sm ${t.type==='success'?'bg-green-600':t.type==='error'?'bg-red-600':'bg-blue-600'}`}>
+                <i className={`fas ${t.type==='success'?'fa-check-circle':t.type==='error'?'fa-exclamation-circle':'fa-info-circle'}`}></i>
                 <span>{t.msg}</span>
               </div>
             ))}
@@ -234,7 +152,102 @@
     }
     function useToast() { return useContext(ToastContext); }
 
-    // ---------- Protected Route ----------
+    // ── Chart Components (Chart.js wrappers) ──────────────────────────────────
+    function ResponsiveContainer({ children, height }) {
+      return <div style={{ width:'100%', height: height || 220 }}>{children}</div>;
+    }
+
+    function BarChart({ data, children }) {
+      const ref = useRef(null);
+      const inst = useRef(null);
+      const childArr = [].concat(children).flat().filter(Boolean);
+      const bars = childArr.filter(c => c && c.type && c.type._barType);
+      useEffect(() => {
+        if (!ref.current || !data) return;
+        inst.current?.destroy();
+        inst.current = new ChartJS(ref.current, {
+          type: 'bar',
+          data: {
+            labels: data.map(d => d.name || d.date || ''),
+            datasets: bars.map(b => ({
+              label: b.props.dataKey,
+              data: data.map(d => d[b.props.dataKey] ?? 0),
+              backgroundColor: b.props.fill || '#3b82f6',
+              borderRadius: 4,
+            }))
+          },
+          options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display: bars.length>1 } }, scales:{ x:{grid:{display:false}}, y:{beginAtZero:true} } }
+        });
+        return () => inst.current?.destroy();
+      }, [JSON.stringify(data)]);
+      return <canvas ref={ref} />;
+    }
+
+    function LineChart({ data, children }) {
+      const ref = useRef(null);
+      const inst = useRef(null);
+      const childArr = [].concat(children).flat().filter(Boolean);
+      const lines = childArr.filter(c => c && c.type && c.type._lineType);
+      useEffect(() => {
+        if (!ref.current || !data) return;
+        inst.current?.destroy();
+        inst.current = new ChartJS(ref.current, {
+          type: 'line',
+          data: {
+            labels: data.map(d => d.name || d.date || ''),
+            datasets: lines.map(l => ({
+              label: l.props.dataKey,
+              data: data.map(d => d[l.props.dataKey] ?? 0),
+              borderColor: l.props.stroke || '#8b5cf6',
+              backgroundColor: 'transparent',
+              borderWidth: 2,
+              pointRadius: 4,
+              tension: 0.3,
+            }))
+          },
+          options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } }, scales:{ y:{ min:0, max:100 } } }
+        });
+        return () => inst.current?.destroy();
+      }, [JSON.stringify(data)]);
+      return <canvas ref={ref} />;
+    }
+
+    function PieChart({ children }) {
+      const ref = useRef(null);
+      const inst = useRef(null);
+      const childArr = [].concat(children).flat().filter(Boolean);
+      const pieEl = childArr.find(c => c && c.type && c.type._pieType);
+      const data = pieEl?.props?.data || [];
+      const nameKey = pieEl?.props?.nameKey || 'name';
+      const dataKey = pieEl?.props?.dataKey || 'value';
+      useEffect(() => {
+        if (!ref.current || !data.length) return;
+        inst.current?.destroy();
+        inst.current = new ChartJS(ref.current, {
+          type: 'pie',
+          data: {
+            labels: data.map(d => d[nameKey]),
+            datasets: [{ data: data.map(d => d[dataKey]), backgroundColor: COLORS }]
+          },
+          options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom', labels:{ boxWidth:12, font:{ size:11 } } } } }
+        });
+        return () => inst.current?.destroy();
+      }, [JSON.stringify(data)]);
+      return <canvas ref={ref} />;
+    }
+
+    // Stub child components — just markers for parent chart to read props from
+    function Bar() { return null; } Bar._barType = true;
+    function Line() { return null; } Line._lineType = true;
+    function Pie() { return null; } Pie._pieType = true;
+    function Cell() { return null; }
+    function XAxis() { return null; }
+    function YAxis() { return null; }
+    function CartesianGrid() { return null; }
+    function Tooltip() { return null; }
+    function Legend() { return null; }
+
+    // ── Protected Route ───────────────────────────────────────────────────────
     function ProtectedRoute({ children, roles }) {
       const user = useStore(state => state.user);
       const token = useStore(state => state.token);
@@ -247,14 +260,12 @@
         if (!token) { setLoading(false); return; }
         if (!user) {
           fetch(`${API_BASE}/auth/me`, { headers: { Authorization: `Bearer ${token}` } })
-            .then(res => res.ok ? res.json() : Promise.reject())
-            .then(data => setUser(data.user))
+            .then(r => r.ok ? r.json() : Promise.reject())
+            .then(d => setUser(d.user))
             .catch(() => logout())
             .finally(() => setLoading(false));
-        } else {
-          setLoading(false);
-        }
-      }, [token, user]);
+        } else { setLoading(false); }
+      }, [token]);
 
       if (loading) return (
         <div className="flex justify-center items-center h-screen">
@@ -269,13 +280,12 @@
         <div className="flex flex-col items-center justify-center h-64 text-red-500">
           <i className="fas fa-lock text-5xl mb-4"></i>
           <p className="text-xl font-semibold">Access Denied</p>
-          <p className="text-sm text-gray-500 mt-2">You don't have permission to view this page.</p>
         </div>
       );
       return children;
     }
 
-    // ---------- Auth Pages ----------
+    // ── Auth Pages ────────────────────────────────────────────────────────────
     function LoginPage() {
       const [email, setEmail] = useState('');
       const [password, setPassword] = useState('');
@@ -286,8 +296,7 @@
       const { addToast } = useToast();
 
       const handleSubmit = async (e) => {
-        e.preventDefault();
-        setError(''); setLoading(true);
+        e.preventDefault(); setError(''); setLoading(true);
         try {
           const res = await fetch(`${API_BASE}/auth/login`, {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -312,7 +321,7 @@
               <h1 className="text-2xl font-bold">Timetable Generator</h1>
               <p className="text-gray-500 text-sm mt-1">Sign in to your account</p>
             </div>
-            {error && <div className="mb-4 text-red-600 text-sm bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 p-3 rounded-lg flex items-center gap-2"><i className="fas fa-exclamation-circle"></i>{error}</div>}
+            {error && <div className="mb-4 text-red-600 text-sm bg-red-50 dark:bg-red-900/30 border border-red-200 p-3 rounded-lg flex items-center gap-2"><i className="fas fa-exclamation-circle"></i>{error}</div>}
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Email</label>
@@ -331,7 +340,7 @@
               <Link to="/forgot-password" className="text-sm text-gray-500 hover:underline block">Forgot password?</Link>
             </div>
             <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg text-xs text-gray-500 text-center">
-              Default admin: <strong>admin@timetable.com</strong> / <strong>Admin@123</strong>
+              Default: <strong>admin@timetable.com</strong> / <strong>Admin@123</strong>
             </div>
           </div>
         </div>
@@ -339,25 +348,23 @@
     }
 
     function RegisterPage() {
-      const [form, setForm] = useState({ email: '', password: '', first_name: '', last_name: '' });
+      const [form, setForm] = useState({ email:'', password:'', first_name:'', last_name:'' });
       const [error, setError] = useState('');
       const [loading, setLoading] = useState(false);
       const navigate = useNavigate();
       const { addToast } = useToast();
 
       const handleSubmit = async (e) => {
-        e.preventDefault();
-        setError(''); setLoading(true);
+        e.preventDefault(); setError(''); setLoading(true);
         try {
           const res = await fetch(`${API_BASE}/auth/register`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(form)
+            method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(form)
           });
           const data = await res.json();
           if (!res.ok) throw new Error(data.msg || 'Registration failed');
           addToast('Account created! You can now log in.', 'success');
           navigate('/login');
-        } catch (err) { setError(err.message); }
+        } catch(err) { setError(err.message); }
         finally { setLoading(false); }
       };
 
@@ -369,27 +376,26 @@
                 <i className="fas fa-user-plus text-white text-2xl"></i>
               </div>
               <h1 className="text-2xl font-bold">Create Account</h1>
-              <p className="text-gray-500 text-sm mt-1">Register a new account</p>
             </div>
-            {error && <div className="mb-4 text-red-600 text-sm bg-red-50 dark:bg-red-900/30 border border-red-200 p-3 rounded-lg flex items-center gap-2"><i className="fas fa-exclamation-circle"></i>{error}</div>}
+            {error && <div className="mb-4 text-red-600 text-sm bg-red-50 border border-red-200 p-3 rounded-lg">{error}</div>}
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium mb-1">First Name</label>
-                  <input placeholder="John" value={form.first_name} onChange={e => setForm({...form, first_name: e.target.value})} className="input" />
+                  <input placeholder="John" value={form.first_name} onChange={e => setForm({...form,first_name:e.target.value})} className="input" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">Last Name</label>
-                  <input placeholder="Doe" value={form.last_name} onChange={e => setForm({...form, last_name: e.target.value})} className="input" />
+                  <input placeholder="Doe" value={form.last_name} onChange={e => setForm({...form,last_name:e.target.value})} className="input" />
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Email</label>
-                <input type="email" placeholder="you@example.com" required value={form.email} onChange={e => setForm({...form, email: e.target.value})} className="input" />
+                <input type="email" required value={form.email} onChange={e => setForm({...form,email:e.target.value})} className="input" />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Password</label>
-                <input type="password" placeholder="••••••••" required value={form.password} onChange={e => setForm({...form, password: e.target.value})} className="input" />
+                <input type="password" required value={form.password} onChange={e => setForm({...form,password:e.target.value})} className="input" />
               </div>
               <button type="submit" className="btn btn-primary w-full" disabled={loading}>
                 {loading ? <><i className="fas fa-spinner fa-spin mr-2"></i>Creating...</> : 'Create Account'}
@@ -410,33 +416,27 @@
       const { addToast } = useToast();
 
       const handleSubmit = async (e) => {
-        e.preventDefault();
-        setLoading(true);
+        e.preventDefault(); setLoading(true);
         try {
           const res = await fetch(`${API_BASE}/auth/forgot-password`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email })
+            method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email })
           });
-          const data = await res.json();
-          setResult(data);
-        } catch (err) { addToast(err.message, 'error'); }
+          setResult(await res.json());
+        } catch(err) { addToast(err.message, 'error'); }
         finally { setLoading(false); }
       };
 
       return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
           <div className="card p-8 w-full max-w-md">
-            <h2 className="text-2xl font-bold mb-2">Forgot Password</h2>
-            <p className="text-gray-500 text-sm mb-6">Enter your email to receive a reset token.</p>
+            <h2 className="text-2xl font-bold mb-6">Forgot Password</h2>
             {result ? (
               <div className="space-y-4">
-                <div className="p-3 bg-green-50 dark:bg-green-900/30 border border-green-200 rounded-lg text-green-700 dark:text-green-400 text-sm">
-                  <i className="fas fa-check-circle mr-2"></i>{result.msg}
-                </div>
+                <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">{result.msg}</div>
                 {result.reset_token && (
-                  <div className="p-3 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 rounded-lg text-sm">
-                    <p className="font-semibold mb-1 text-yellow-800 dark:text-yellow-300">Reset Token (copy this):</p>
-                    <code className="text-xs break-all text-gray-700 dark:text-gray-300">{result.reset_token}</code>
+                  <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm">
+                    <p className="font-semibold mb-1">Reset Token:</p>
+                    <code className="text-xs break-all">{result.reset_token}</code>
                   </div>
                 )}
                 <Link to="/reset-password/use" className="btn btn-primary w-full text-center block">Go to Reset Password</Link>
@@ -445,7 +445,7 @@
               <form onSubmit={handleSubmit} className="space-y-4">
                 <input type="email" placeholder="Email address" value={email} onChange={e => setEmail(e.target.value)} required className="input" />
                 <button type="submit" className="btn btn-primary w-full" disabled={loading}>
-                  {loading ? <><i className="fas fa-spinner fa-spin mr-2"></i>Sending...</> : 'Get Reset Token'}
+                  {loading ? 'Sending...' : 'Get Reset Token'}
                 </button>
               </form>
             )}
@@ -466,17 +466,15 @@
       const { addToast } = useToast();
 
       const handleSubmit = async (e) => {
-        e.preventDefault();
-        setLoading(true);
+        e.preventDefault(); setLoading(true);
         try {
           const res = await fetch(`${API_BASE}/auth/reset-password/${token}`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ password })
+            method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ password })
           });
           if (!res.ok) throw new Error((await res.json()).msg);
           setDone(true);
           addToast('Password reset successful.', 'success');
-        } catch (err) { addToast(err.message, 'error'); }
+        } catch(err) { addToast(err.message, 'error'); }
         finally { setLoading(false); }
       };
 
@@ -494,14 +492,14 @@
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">Reset Token</label>
-                  <input placeholder="Paste your reset token here" value={token} onChange={e => setToken(e.target.value)} required className="input text-xs" />
+                  <input placeholder="Paste reset token" value={token} onChange={e => setToken(e.target.value)} required className="input text-xs" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">New Password</label>
-                  <input type="password" placeholder="New password" value={password} onChange={e => setPassword(e.target.value)} required className="input" />
+                  <input type="password" value={password} onChange={e => setPassword(e.target.value)} required className="input" />
                 </div>
                 <button type="submit" className="btn btn-primary w-full" disabled={loading}>
-                  {loading ? <><i className="fas fa-spinner fa-spin mr-2"></i>Resetting...</> : 'Reset Password'}
+                  {loading ? 'Resetting...' : 'Reset Password'}
                 </button>
               </form>
             )}
@@ -510,7 +508,7 @@
       );
     }
 
-    // ---------- Dashboard Layout ----------
+    // ── Dashboard Layout ──────────────────────────────────────────────────────
     function DashboardLayout({ children }) {
       const user = useStore(state => state.user);
       const logout = useStore(state => state.logout);
@@ -522,59 +520,57 @@
       const fetchWithAuth = useAuthApi();
       const location = useLocation();
 
-      const { data: notifications = [] } = useQuery({
-        queryKey: ['notifications'],
-        queryFn: () => fetchWithAuth('/notifications').catch(() => []),
-        refetchInterval: 30000
-      });
+      const { data: notifications = [] } = useQuery
+        ? useQuery({ queryKey:['notifications'], queryFn:() => fetchWithAuth('/notifications').catch(()=>[]), refetchInterval:30000 })
+        : { data: [] };
       const unreadCount = notifications.filter(n => !n.is_read).length;
 
       const navItems = useMemo(() => {
-        const items = [
-          { to: '/dashboard', icon: 'fa-tachometer-alt', label: 'Dashboard', roles: ['super_admin','institution_admin','hod','lecturer','student'] },
-          { to: '/admin/institutions', icon: 'fa-university', label: 'Institutions', roles: ['super_admin'] },
-          { to: '/admin/users', icon: 'fa-users', label: 'Users', roles: ['super_admin'] },
-          { to: '/faculties', icon: 'fa-building', label: 'Faculties', roles: ['super_admin','institution_admin'] },
-          { to: '/departments', icon: 'fa-sitemap', label: 'Departments', roles: ['super_admin','institution_admin'] },
-          { to: '/programmes', icon: 'fa-graduation-cap', label: 'Programmes', roles: ['super_admin','institution_admin'] },
-          { to: '/sessions', icon: 'fa-calendar', label: 'Sessions', roles: ['super_admin','institution_admin'] },
-          { to: '/semesters', icon: 'fa-calendar-alt', label: 'Semesters', roles: ['super_admin','institution_admin'] },
-          { to: '/courses', icon: 'fa-book', label: 'Courses', roles: ['super_admin','institution_admin','hod'] },
-          { to: '/lecturers', icon: 'fa-chalkboard-teacher', label: 'Lecturers', roles: ['super_admin','institution_admin'] },
-          { to: '/venues', icon: 'fa-door-open', label: 'Venues', roles: ['super_admin','institution_admin'] },
-          { to: '/timetable/generate', icon: 'fa-magic', label: 'Generate', roles: ['super_admin','institution_admin','hod'] },
-          { to: '/timetable/view', icon: 'fa-table', label: 'Timetable', roles: ['super_admin','institution_admin','hod','lecturer','student'] },
-          { to: '/conflicts', icon: 'fa-exclamation-triangle', label: 'Conflicts', roles: ['super_admin','institution_admin','hod'] },
-          { to: '/reports', icon: 'fa-file-alt', label: 'Reports', roles: ['super_admin','institution_admin','hod'] },
-          { to: '/audit-logs', icon: 'fa-history', label: 'Audit Logs', roles: ['super_admin'] },
-          { to: '/notifications', icon: 'fa-bell', label: 'Notifications', roles: ['super_admin','institution_admin','hod','lecturer','student'] },
+        const all = [
+          { to:'/dashboard', icon:'fa-tachometer-alt', label:'Dashboard', roles:['super_admin','institution_admin','hod','lecturer','student'] },
+          { to:'/admin/institutions', icon:'fa-university', label:'Institutions', roles:['super_admin'] },
+          { to:'/admin/users', icon:'fa-users', label:'Users', roles:['super_admin'] },
+          { to:'/faculties', icon:'fa-building', label:'Faculties', roles:['super_admin','institution_admin'] },
+          { to:'/departments', icon:'fa-sitemap', label:'Departments', roles:['super_admin','institution_admin'] },
+          { to:'/programmes', icon:'fa-graduation-cap', label:'Programmes', roles:['super_admin','institution_admin'] },
+          { to:'/sessions', icon:'fa-calendar', label:'Sessions', roles:['super_admin','institution_admin'] },
+          { to:'/semesters', icon:'fa-calendar-alt', label:'Semesters', roles:['super_admin','institution_admin'] },
+          { to:'/courses', icon:'fa-book', label:'Courses', roles:['super_admin','institution_admin','hod'] },
+          { to:'/lecturers', icon:'fa-chalkboard-teacher', label:'Lecturers', roles:['super_admin','institution_admin'] },
+          { to:'/venues', icon:'fa-door-open', label:'Venues', roles:['super_admin','institution_admin'] },
+          { to:'/timetable/generate', icon:'fa-magic', label:'Generate', roles:['super_admin','institution_admin','hod'] },
+          { to:'/timetable/view', icon:'fa-table', label:'Timetable', roles:['super_admin','institution_admin','hod','lecturer','student'] },
+          { to:'/conflicts', icon:'fa-exclamation-triangle', label:'Conflicts', roles:['super_admin','institution_admin','hod'] },
+          { to:'/reports', icon:'fa-file-alt', label:'Reports', roles:['super_admin','institution_admin','hod'] },
+          { to:'/audit-logs', icon:'fa-history', label:'Audit Logs', roles:['super_admin'] },
+          { to:'/notifications', icon:'fa-bell', label:'Notifications', roles:['super_admin','institution_admin','hod','lecturer','student'] },
         ];
-        return items.filter(i => i.roles.includes(user?.role));
+        return all.filter(i => i.roles.includes(user?.role));
       }, [user]);
 
       return (
         <div className="flex h-screen overflow-hidden">
           {/* Sidebar */}
-          <div className={`${sidebarOpen ? 'w-64' : 'w-16'} bg-gray-900 text-white transition-all duration-300 overflow-y-auto sidebar flex flex-col flex-shrink-0`}>
+          <div className={`${sidebarOpen?'w-64':'w-16'} bg-gray-900 text-white transition-all duration-300 overflow-y-auto sidebar flex flex-col flex-shrink-0`}>
             <div className="p-4 flex justify-between items-center border-b border-gray-700">
               {sidebarOpen && (
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
                     <i className="fas fa-calendar-alt text-white text-xs"></i>
                   </div>
                   <span className="font-bold text-sm">Timetable</span>
                 </div>
               )}
               <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-gray-400 hover:text-white p-1">
-                <i className={`fas ${sidebarOpen ? 'fa-chevron-left' : 'fa-bars'}`}></i>
+                <i className={`fas ${sidebarOpen?'fa-chevron-left':'fa-bars'}`}></i>
               </button>
             </div>
             <nav className="flex-1 py-2">
               {navItems.map(item => {
                 const isActive = location.pathname === item.to;
                 return (
-                  <Link key={item.to} to={item.to} className={`nav-link ${isActive ? 'active' : ''}`} title={!sidebarOpen ? item.label : ''}>
-                    <i className={`fas ${item.icon} text-sm ${sidebarOpen ? 'w-5' : 'w-full text-center'}`}></i>
+                  <Link key={item.to} to={item.to} className={`nav-link ${isActive?'active':''}`} title={!sidebarOpen?item.label:''}>
+                    <i className={`fas ${item.icon} text-sm ${sidebarOpen?'w-5':'w-full text-center'}`}></i>
                     {sidebarOpen && <span className="ml-3 text-sm">{item.label}</span>}
                     {sidebarOpen && unreadCount > 0 && item.to === '/notifications' && (
                       <span className="ml-auto bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">{unreadCount}</span>
@@ -585,10 +581,8 @@
             </nav>
             {sidebarOpen && (
               <div className="p-4 border-t border-gray-700">
-                <div className="text-xs text-gray-500">
-                  <p className="font-medium text-gray-300">{user?.first_name} {user?.last_name}</p>
-                  <p className="capitalize mt-0.5">{user?.role?.replace('_', ' ')}</p>
-                </div>
+                <p className="font-medium text-gray-300 text-xs">{user?.first_name} {user?.last_name}</p>
+                <p className="capitalize text-gray-500 text-xs mt-0.5">{user?.role?.replace('_',' ')}</p>
               </div>
             )}
           </div>
@@ -596,16 +590,13 @@
           {/* Main */}
           <div className="flex-1 flex flex-col overflow-hidden min-w-0">
             <header className="bg-white dark:bg-gray-800 shadow-sm px-6 py-3 flex justify-between items-center flex-shrink-0">
+              <h2 className="text-lg font-semibold hidden sm:block">
+                {navItems.find(i => i.to === location.pathname)?.label || 'Dashboard'}
+              </h2>
               <div className="flex items-center gap-3">
-                <h2 className="text-lg font-semibold hidden sm:block">
-                  {navItems.find(i => i.to === location.pathname)?.label || 'Dashboard'}
-                </h2>
-              </div>
-              <div className="flex items-center gap-3">
-                <button onClick={toggleTheme} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500" title="Toggle theme">
-                  <i className={`fas ${theme === 'dark' ? 'fa-sun' : 'fa-moon'}`}></i>
+                <button onClick={toggleTheme} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500">
+                  <i className={`fas ${theme==='dark'?'fa-sun':'fa-moon'}`}></i>
                 </button>
-                {/* Notifications */}
                 <div className="relative">
                   <button onClick={() => { setNotifOpen(!notifOpen); setUserMenuOpen(false); }} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 relative">
                     <i className="fas fa-bell"></i>
@@ -615,20 +606,20 @@
                     <div className="absolute right-0 mt-2 w-80 card rounded-xl shadow-xl z-50 max-h-96 overflow-y-auto">
                       <div className="p-3 font-semibold border-b dark:border-gray-700 flex justify-between">
                         <span>Notifications</span>
-                        <Link to="/notifications" className="text-xs text-blue-600 hover:underline" onClick={() => setNotifOpen(false)}>View all</Link>
+                        <Link to="/notifications" className="text-xs text-blue-600" onClick={() => setNotifOpen(false)}>View all</Link>
                       </div>
-                      {notifications.length === 0 ? (
-                        <p className="p-4 text-gray-500 text-sm text-center"><i className="fas fa-bell-slash mb-2 block text-xl"></i>No notifications</p>
-                      ) : notifications.slice(0, 6).map(n => (
-                        <div key={n.id} className={`p-3 border-b dark:border-gray-700 last:border-0 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 ${!n.is_read ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
-                          <p>{n.message}</p>
-                          <span className="text-xs text-gray-400">{new Date(n.created_at).toLocaleString()}</span>
-                        </div>
-                      ))}
+                      {notifications.length === 0
+                        ? <p className="p-4 text-gray-500 text-sm text-center">No notifications</p>
+                        : notifications.slice(0,6).map(n => (
+                          <div key={n.id} className={`p-3 border-b dark:border-gray-700 last:border-0 text-sm ${!n.is_read?'bg-blue-50 dark:bg-blue-900/20':''}`}>
+                            <p>{n.message}</p>
+                            <span className="text-xs text-gray-400">{new Date(n.created_at).toLocaleString()}</span>
+                          </div>
+                        ))
+                      }
                     </div>
                   )}
                 </div>
-                {/* User Menu */}
                 <div className="relative">
                   <button onClick={() => { setUserMenuOpen(!userMenuOpen); setNotifOpen(false); }} className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
                     <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">
@@ -641,7 +632,7 @@
                     <div className="absolute right-0 mt-2 w-48 card rounded-xl shadow-xl z-50">
                       <div className="p-3 border-b dark:border-gray-700">
                         <p className="font-semibold text-sm">{user?.first_name} {user?.last_name}</p>
-                        <p className="text-xs text-gray-500 capitalize">{user?.role?.replace('_', ' ')}</p>
+                        <p className="text-xs text-gray-500 capitalize">{user?.role?.replace('_',' ')}</p>
                       </div>
                       <button onClick={logout} className="w-full text-left p-3 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2">
                         <i className="fas fa-sign-out-alt"></i> Logout
@@ -659,29 +650,27 @@
       );
     }
 
-    // ---------- Reusable DataTable ----------
-    function DataTable({ columns, data, onEdit, onDelete, loading, extraActions }) {
+    // ── DataTable ─────────────────────────────────────────────────────────────
+    function DataTable({ columns, data, onEdit, onDelete, loading }) {
       const [search, setSearch] = useState('');
-      const [currentPage, setCurrentPage] = useState(1);
+      const [page, setPage] = useState(1);
       const perPage = 10;
-      const filtered = (data || []).filter(row =>
-        columns.some(col => String(row[col.accessor] ?? '').toLowerCase().includes(search.toLowerCase()))
+      const filtered = (data||[]).filter(row =>
+        columns.some(col => String(row[col.accessor]??'').toLowerCase().includes(search.toLowerCase()))
       );
       const totalPages = Math.ceil(filtered.length / perPage);
-      const paginated = filtered.slice((currentPage - 1) * perPage, currentPage * perPage);
+      const paginated = filtered.slice((page-1)*perPage, page*perPage);
 
       return (
         <div>
-          <div className="mb-4 flex items-center gap-2">
-            <div className="relative flex-1 max-w-sm">
+          <div className="mb-4">
+            <div className="relative max-w-sm">
               <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
-              <input type="text" placeholder="Search..." value={search}
-                onChange={e => { setSearch(e.target.value); setCurrentPage(1); }}
-                className="input pl-9" />
+              <input type="text" placeholder="Search..." value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} className="input pl-9" />
             </div>
           </div>
           {loading ? (
-            <div className="text-center py-12"><i className="fas fa-spinner fa-spin text-3xl text-blue-500"></i><p className="text-gray-500 mt-2 text-sm">Loading...</p></div>
+            <div className="text-center py-12"><i className="fas fa-spinner fa-spin text-3xl text-blue-500"></i></div>
           ) : (
             <>
               <div className="overflow-x-auto rounded-xl border dark:border-gray-700">
@@ -689,37 +678,33 @@
                   <thead>
                     <tr className="bg-gray-50 dark:bg-gray-700">
                       {columns.map(col => <th key={col.accessor} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">{col.header}</th>)}
-                      {(onEdit || onDelete || extraActions) && <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">Actions</th>}
+                      {(onEdit||onDelete) && <th className="px-4 py-3 text-right text-xs font-semibold uppercase">Actions</th>}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                    {paginated.map((row, idx) => (
-                      <tr key={row.id || idx} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                        {columns.map(col => <td key={col.accessor} className="px-4 py-3 text-sm">{col.render ? col.render(row) : (row[col.accessor] ?? '—')}</td>)}
-                        {(onEdit || onDelete || extraActions) && (
+                    {paginated.map((row,idx) => (
+                      <tr key={row.id||idx} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                        {columns.map(col => <td key={col.accessor} className="px-4 py-3 text-sm">{col.render ? col.render(row) : (row[col.accessor]??'—')}</td>)}
+                        {(onEdit||onDelete) && (
                           <td className="px-4 py-3 text-right space-x-2">
-                            {extraActions && extraActions(row)}
-                            {onEdit && <button onClick={() => onEdit(row)} className="text-blue-600 hover:text-blue-800 p-1" title="Edit"><i className="fas fa-edit"></i></button>}
-                            {onDelete && <button onClick={() => { if(confirm('Delete this item?')) onDelete(row.id); }} className="text-red-500 hover:text-red-700 p-1" title="Delete"><i className="fas fa-trash"></i></button>}
+                            {onEdit && <button onClick={() => onEdit(row)} className="text-blue-600 hover:text-blue-800 p-1"><i className="fas fa-edit"></i></button>}
+                            {onDelete && <button onClick={() => { if(confirm('Delete this item?')) onDelete(row.id); }} className="text-red-500 hover:text-red-700 p-1"><i className="fas fa-trash"></i></button>}
                           </td>
                         )}
                       </tr>
                     ))}
                     {paginated.length === 0 && (
-                      <tr><td colSpan={columns.length + 1} className="text-center py-12 text-gray-400"><i className="fas fa-inbox text-3xl mb-2 block"></i>No data found</td></tr>
+                      <tr><td colSpan={columns.length+1} className="text-center py-12 text-gray-400"><i className="fas fa-inbox text-3xl mb-2 block"></i>No data found</td></tr>
                     )}
                   </tbody>
                 </table>
               </div>
               {totalPages > 1 && (
                 <div className="flex justify-between items-center mt-4 text-sm text-gray-500">
-                  <span>Showing {(currentPage-1)*perPage+1}–{Math.min(currentPage*perPage, filtered.length)} of {filtered.length}</span>
+                  <span>Showing {(page-1)*perPage+1}–{Math.min(page*perPage,filtered.length)} of {filtered.length}</span>
                   <div className="flex gap-1">
-                    <button onClick={() => setCurrentPage(p => Math.max(1, p-1))} disabled={currentPage===1} className="btn btn-secondary text-xs px-3 py-1">Prev</button>
-                    {[...Array(totalPages)].map((_,i) => (
-                      <button key={i} onClick={() => setCurrentPage(i+1)} className={`btn text-xs px-3 py-1 ${currentPage===i+1 ? 'btn-primary' : 'btn-secondary'}`}>{i+1}</button>
-                    ))}
-                    <button onClick={() => setCurrentPage(p => Math.min(totalPages, p+1))} disabled={currentPage===totalPages} className="btn btn-secondary text-xs px-3 py-1">Next</button>
+                    <button onClick={() => setPage(p => Math.max(1,p-1))} disabled={page===1} className="btn btn-secondary text-xs px-3 py-1">Prev</button>
+                    <button onClick={() => setPage(p => Math.min(totalPages,p+1))} disabled={page===totalPages} className="btn btn-secondary text-xs px-3 py-1">Next</button>
                   </div>
                 </div>
               )}
@@ -729,7 +714,7 @@
       );
     }
 
-    // ---------- Generic CRUD Modal Form ----------
+    // ── Entity Modal ──────────────────────────────────────────────────────────
     function EntityModal({ entityName, formFields, editItem, onClose, onSave, saving }) {
       const handleSubmit = (e) => {
         e.preventDefault();
@@ -737,31 +722,29 @@
         const payload = Object.fromEntries(form.entries());
         formFields.forEach(f => {
           if (f.type === 'number' && payload[f.name]) payload[f.name] = Number(payload[f.name]);
-          if (f.type === 'checkbox') payload[f.name] = form.get(f.name) === 'on';
         });
         onSave(payload);
       };
-
       return (
-        <div className="modal-backdrop" onClick={e => e.target === e.currentTarget && onClose()}>
+        <div className="modal-backdrop" onClick={e => e.target===e.currentTarget && onClose()}>
           <div className="card p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">{editItem ? 'Edit' : 'Add'} {entityName}</h2>
+              <h2 className="text-xl font-bold">{editItem?'Edit':'Add'} {entityName}</h2>
               <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl"><i className="fas fa-times"></i></button>
             </div>
             <form onSubmit={handleSubmit} className="space-y-4">
               {formFields.map(field => (
                 <div key={field.name}>
-                  <label className="block text-sm font-medium mb-1">{field.label}{field.required !== false && <span className="text-red-500 ml-0.5">*</span>}</label>
-                  {field.type === 'select' ? (
-                    <select name={field.name} defaultValue={editItem?.[field.name] ?? ''} required={field.required !== false} className="input">
+                  <label className="block text-sm font-medium mb-1">{field.label}{field.required!==false && <span className="text-red-500 ml-0.5">*</span>}</label>
+                  {field.type==='select' ? (
+                    <select name={field.name} defaultValue={editItem?.[field.name]??''} required={field.required!==false} className="input">
                       <option value="">Select {field.label}...</option>
                       {field.options?.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
                     </select>
-                  ) : field.type === 'textarea' ? (
-                    <textarea name={field.name} defaultValue={editItem?.[field.name] ?? ''} className="input h-20 py-2" style={{height:'5rem'}} />
+                  ) : field.type==='textarea' ? (
+                    <textarea name={field.name} defaultValue={editItem?.[field.name]??''} className="input h-20 py-2" style={{height:'5rem'}} />
                   ) : (
-                    <input type={field.type || 'text'} name={field.name} defaultValue={editItem?.[field.name] ?? ''} required={field.required !== false} className="input" step={field.type === 'number' ? 'any' : undefined} />
+                    <input type={field.type||'text'} name={field.name} defaultValue={editItem?.[field.name]??''} required={field.required!==false} className="input" />
                   )}
                 </div>
               ))}
@@ -777,105 +760,87 @@
       );
     }
 
-    // ---------- Generic Entity Page ----------
+    // ── Entity Page (generic CRUD) ────────────────────────────────────────────
     function EntityPage({ entityName, apiPath, columns, formFields }) {
       const fetchWithAuth = useAuthApi();
       const { addToast } = useToast();
-      const qc = useQueryClient();
+      const qc = useQueryClient ? useQueryClient() : null;
       const [showForm, setShowForm] = useState(false);
       const [editItem, setEditItem] = useState(null);
 
-      const { data = [], isLoading } = useQuery({
-        queryKey: [apiPath],
-        queryFn: () => fetchWithAuth(apiPath)
-      });
+      const { data=[], isLoading } = useQuery
+        ? useQuery({ queryKey:[apiPath], queryFn:() => fetchWithAuth(apiPath) })
+        : { data:[], isLoading:false };
 
-      const deleteMutation = useMutation({
-        mutationFn: (id) => fetchWithAuth(`${apiPath}/${id}`, { method: 'DELETE' }),
-        onSuccess: () => { addToast('Deleted successfully', 'success'); qc.invalidateQueries([apiPath]); }
-      });
+      const doDelete = async (id) => {
+        try {
+          await fetchWithAuth(`${apiPath}/${id}`, { method:'DELETE' });
+          addToast('Deleted successfully', 'success');
+          qc?.invalidateQueries([apiPath]);
+        } catch(err) { addToast(err.message, 'error'); }
+      };
 
-      const saveMutation = useMutation({
-        mutationFn: (payload) => editItem
-          ? fetchWithAuth(`${apiPath}/${editItem.id}`, { method: 'PUT', body: JSON.stringify(payload) })
-          : fetchWithAuth(apiPath, { method: 'POST', body: JSON.stringify(payload) }),
-        onSuccess: () => {
-          addToast(editItem ? 'Updated successfully' : 'Created successfully', 'success');
+      const doSave = async (payload) => {
+        try {
+          if (editItem) {
+            await fetchWithAuth(`${apiPath}/${editItem.id}`, { method:'PUT', body: JSON.stringify(payload) });
+            addToast('Updated successfully', 'success');
+          } else {
+            await fetchWithAuth(apiPath, { method:'POST', body: JSON.stringify(payload) });
+            addToast('Created successfully', 'success');
+          }
           setShowForm(false); setEditItem(null);
-          qc.invalidateQueries([apiPath]);
-        },
-        onError: (err) => addToast(err.message, 'error')
-      });
+          qc?.invalidateQueries([apiPath]);
+        } catch(err) { addToast(err.message, 'error'); }
+      };
 
       return (
         <div>
           <div className="flex justify-between items-center mb-6">
             <div>
               <h1 className="text-2xl font-bold">{entityName}</h1>
-              <p className="text-sm text-gray-500">{(data || []).length} record{(data || []).length !== 1 ? 's' : ''}</p>
+              <p className="text-sm text-gray-500">{(data||[]).length} record{(data||[]).length!==1?'s':''}</p>
             </div>
             <button onClick={() => { setShowForm(true); setEditItem(null); }} className="btn btn-primary gap-2">
               <i className="fas fa-plus"></i> Add {entityName}
             </button>
           </div>
-
           {showForm && (
-            <EntityModal
-              entityName={entityName}
-              formFields={formFields}
-              editItem={editItem}
+            <EntityModal entityName={entityName} formFields={formFields} editItem={editItem}
               onClose={() => { setShowForm(false); setEditItem(null); }}
-              onSave={saveMutation.mutate}
-              saving={saveMutation.isPending}
-            />
+              onSave={doSave} saving={false} />
           )}
-
           <div className="card p-4">
-            <DataTable
-              columns={columns}
-              data={data}
-              onEdit={(item) => { setEditItem(item); setShowForm(true); }}
-              onDelete={deleteMutation.mutate}
-              loading={isLoading}
-            />
+            <DataTable columns={columns} data={data}
+              onEdit={item => { setEditItem(item); setShowForm(true); }}
+              onDelete={doDelete} loading={isLoading} />
           </div>
         </div>
       );
     }
 
-    // ---------- Analytics Dashboard ----------
+    // ── Analytics Dashboard ───────────────────────────────────────────────────
     function AnalyticsDashboard() {
       const fetchWithAuth = useAuthApi();
-      const { data, isLoading } = useQuery({
-        queryKey: ['analytics-summary'],
-        queryFn: () => fetchWithAuth('/analytics/summary').catch(() => ({
-          venueUtilization: [
-            {name:'Hall A', utilization:70},{name:'Hall B', utilization:45},{name:'Lab 1', utilization:90},{name:'Room 201', utilization:55}
-          ],
-          lecturerWorkload: [
-            {name:'Dr. Musa', hours:18},{name:'Dr. Ali', hours:12},{name:'Prof. Yusuf', hours:22},{name:'Dr. Bello', hours:8}
-          ],
-          qualityTrend: [
-            {date:'Week 1', score:78},{date:'Week 2', score:85},{date:'Week 3', score:82},{date:'Week 4', score:92}
-          ],
-          counts: { courses:0, lecturers:0, venues:0, timetables:0, active_sessions:0 }
-        }))
-      });
+      const fallback = {
+        venueUtilization:[{name:'Hall A',utilization:70},{name:'Hall B',utilization:45},{name:'Lab 1',utilization:90},{name:'Room 201',utilization:55}],
+        lecturerWorkload:[{name:'Dr. Musa',hours:18},{name:'Dr. Ali',hours:12},{name:'Prof. Yusuf',hours:22},{name:'Dr. Bello',hours:8}],
+        qualityTrend:[{date:'Week 1',score:78},{date:'Week 2',score:85},{date:'Week 3',score:82},{date:'Week 4',score:92}],
+        counts:{courses:0,lecturers:0,venues:0,timetables:0,active_sessions:0}
+      };
+      const { data=fallback, isLoading } = useQuery
+        ? useQuery({ queryKey:['analytics'], queryFn:() => fetchWithAuth('/analytics/summary').catch(()=>fallback) })
+        : { data: fallback };
 
-      if (isLoading) return (
-        <div className="text-center py-12">
-          <i className="fas fa-spinner fa-spin text-4xl text-blue-500"></i>
-          <p className="text-gray-500 mt-3">Loading analytics...</p>
-        </div>
-      );
+      if (isLoading) return <div className="text-center py-12"><i className="fas fa-spinner fa-spin text-4xl text-blue-500"></i></div>;
 
       const counts = data?.counts || {};
       const statCards = [
-        { label: 'Total Courses', value: counts.courses ?? 0, icon: 'fa-book', color: 'bg-blue-500', bg: 'bg-blue-50 dark:bg-blue-900/20' },
-        { label: 'Lecturers', value: counts.lecturers ?? 0, icon: 'fa-chalkboard-teacher', color: 'bg-green-500', bg: 'bg-green-50 dark:bg-green-900/20' },
-        { label: 'Venues', value: counts.venues ?? 0, icon: 'fa-door-open', color: 'bg-purple-500', bg: 'bg-purple-50 dark:bg-purple-900/20' },
-        { label: 'Timetables Generated', value: counts.timetables ?? 0, icon: 'fa-calendar-check', color: 'bg-orange-500', bg: 'bg-orange-50 dark:bg-orange-900/20' },
-        { label: 'Active Sessions', value: counts.active_sessions ?? 0, icon: 'fa-play-circle', color: 'bg-teal-500', bg: 'bg-teal-50 dark:bg-teal-900/20' },
+        { label:'Total Courses', value:counts.courses??0, icon:'fa-book', color:'bg-blue-500', bg:'bg-blue-50 dark:bg-blue-900/20' },
+        { label:'Lecturers', value:counts.lecturers??0, icon:'fa-chalkboard-teacher', color:'bg-green-500', bg:'bg-green-50 dark:bg-green-900/20' },
+        { label:'Venues', value:counts.venues??0, icon:'fa-door-open', color:'bg-purple-500', bg:'bg-purple-50 dark:bg-purple-900/20' },
+        { label:'Timetables', value:counts.timetables??0, icon:'fa-calendar-check', color:'bg-orange-500', bg:'bg-orange-50 dark:bg-orange-900/20' },
+        { label:'Active Sessions', value:counts.active_sessions??0, icon:'fa-play-circle', color:'bg-teal-500', bg:'bg-teal-50 dark:bg-teal-900/20' },
       ];
 
       return (
@@ -884,8 +849,6 @@
             <h1 className="text-2xl font-bold">Analytics Dashboard</h1>
             <p className="text-sm text-gray-500">System overview and statistics</p>
           </div>
-
-          {/* Stat Cards */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
             {statCards.map(s => (
               <div key={s.label} className={`card p-4 ${s.bg}`}>
@@ -901,42 +864,28 @@
               </div>
             ))}
           </div>
-
-          {/* Charts */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="card p-5">
               <h3 className="font-semibold mb-4 flex items-center gap-2"><i className="fas fa-building text-blue-500"></i> Venue Utilization (%)</h3>
-              <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={data?.venueUtilization || []} margin={{top:0,right:10,left:-20,bottom:0}}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis dataKey="name" tick={{fontSize:11}} />
-                  <YAxis tick={{fontSize:11}} />
-                  <Tooltip />
-                  <Bar dataKey="utilization" fill="#3b82f6" radius={[4,4,0,0]} />
+              <ResponsiveContainer height={220}>
+                <BarChart data={data?.venueUtilization||[]}>
+                  <Bar dataKey="utilization" fill="#3b82f6" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
             <div className="card p-5">
               <h3 className="font-semibold mb-4 flex items-center gap-2"><i className="fas fa-users text-green-500"></i> Lecturer Workload</h3>
-              <ResponsiveContainer width="100%" height={220}>
+              <ResponsiveContainer height={220}>
                 <PieChart>
-                  <Pie data={data?.lecturerWorkload || []} dataKey="hours" nameKey="name" cx="50%" cy="50%" outerRadius={80} label={({name, percent}) => `${(percent*100).toFixed(0)}%`}>
-                    {(data?.lecturerWorkload || []).map((_, idx) => <Cell key={idx} fill={COLORS[idx % COLORS.length]} />)}
-                  </Pie>
-                  <Tooltip formatter={(v, n) => [v + ' slots', n]} />
-                  <Legend iconSize={10} />
+                  <Pie data={data?.lecturerWorkload||[]} dataKey="hours" nameKey="name" />
                 </PieChart>
               </ResponsiveContainer>
             </div>
             <div className="card p-5">
               <h3 className="font-semibold mb-4 flex items-center gap-2"><i className="fas fa-chart-line text-purple-500"></i> Quality Trend</h3>
-              <ResponsiveContainer width="100%" height={220}>
-                <LineChart data={data?.qualityTrend || []} margin={{top:0,right:10,left:-20,bottom:0}}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis dataKey="date" tick={{fontSize:11}} />
-                  <YAxis domain={[0, 100]} tick={{fontSize:11}} />
-                  <Tooltip />
-                  <Line type="monotone" dataKey="score" stroke="#8b5cf6" strokeWidth={2} dot={{r:4}} />
+              <ResponsiveContainer height={220}>
+                <LineChart data={data?.qualityTrend||[]}>
+                  <Line dataKey="score" stroke="#8b5cf6" />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -945,31 +894,33 @@
       );
     }
 
-    // ---------- Timetable Generator ----------
+    // ── Timetable Generator ───────────────────────────────────────────────────
     function TimetableGeneratorPage() {
       const fetchWithAuth = useAuthApi();
       const { addToast } = useToast();
       const [selectedSession, setSelectedSession] = useState('');
       const [selectedSemester, setSelectedSemester] = useState('');
       const [result, setResult] = useState(null);
+      const [generating, setGenerating] = useState(false);
       const navigate = useNavigate();
 
-      const { data: sessions = [] } = useQuery({ queryKey: ['sessions'], queryFn: () => fetchWithAuth('/institution/sessions') });
-      const { data: semesters = [] } = useQuery({ queryKey: ['semesters'], queryFn: () => fetchWithAuth('/institution/semesters') });
+      const { data:sessions=[] } = useQuery ? useQuery({ queryKey:['sessions'], queryFn:() => fetchWithAuth('/institution/sessions') }) : { data:[] };
+      const { data:semesters=[] } = useQuery ? useQuery({ queryKey:['semesters'], queryFn:() => fetchWithAuth('/institution/semesters') }) : { data:[] };
       const filteredSemesters = semesters.filter(s => String(s.session_id) === String(selectedSession));
 
-      const generateMutation = useMutation({
-        mutationFn: () => fetchWithAuth('/timetable/generate', {
-          method: 'POST', body: JSON.stringify({ session_id: Number(selectedSession), semester_id: Number(selectedSemester) })
-        }),
-        onSuccess: (data) => {
+      const handleGenerate = async () => {
+        setGenerating(true);
+        try {
+          const data = await fetchWithAuth('/timetable/generate', {
+            method:'POST', body: JSON.stringify({ session_id:Number(selectedSession), semester_id:Number(selectedSemester) })
+          });
           setResult(data);
           addToast(`Timetable generated! Quality: ${data.quality_score}/100`, 'success');
-        },
-        onError: (err) => addToast(err.message, 'error')
-      });
+        } catch(err) { addToast(err.message, 'error'); }
+        finally { setGenerating(false); }
+      };
 
-      const qualityColor = result ? (result.quality_score >= 80 ? 'text-green-600' : result.quality_score >= 60 ? 'text-yellow-600' : 'text-red-600') : '';
+      const qualityColor = result ? (result.quality_score>=80?'text-green-600':result.quality_score>=60?'text-yellow-600':'text-red-600') : '';
 
       return (
         <div className="max-w-2xl">
@@ -977,7 +928,6 @@
             <h1 className="text-2xl font-bold">Generate Timetable</h1>
             <p className="text-sm text-gray-500">AI-powered constraint satisfaction scheduling engine</p>
           </div>
-
           <div className="card p-6 space-y-5">
             <div>
               <label className="block text-sm font-semibold mb-2">Academic Session</label>
@@ -993,33 +943,21 @@
                 {filteredSemesters.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
             </div>
-
             <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 text-sm">
-              <p className="font-semibold text-blue-800 dark:text-blue-300 mb-2 flex items-center gap-2"><i className="fas fa-robot"></i>AI Engine Features</p>
+              <p className="font-semibold text-blue-800 dark:text-blue-300 mb-2"><i className="fas fa-robot mr-2"></i>AI Engine Features</p>
               <ul className="space-y-1 text-blue-700 dark:text-blue-400 text-xs">
-                <li><i className="fas fa-check mr-2"></i>Lecturer clash prevention (hard constraint)</li>
-                <li><i className="fas fa-check mr-2"></i>Venue clash prevention (hard constraint)</li>
-                <li><i className="fas fa-check mr-2"></i>Student group conflict detection (hard constraint)</li>
-                <li><i className="fas fa-check mr-2"></i>Venue capacity matching (hard constraint)</li>
-                <li><i className="fas fa-check mr-2"></i>Daily & weekly lecturer load limits (hard constraint)</li>
-                <li><i className="fas fa-star mr-2"></i>Workload balance optimization (soft constraint)</li>
+                <li><i className="fas fa-check mr-2"></i>Lecturer clash prevention</li>
+                <li><i className="fas fa-check mr-2"></i>Venue clash prevention</li>
+                <li><i className="fas fa-check mr-2"></i>Student group conflict detection</li>
+                <li><i className="fas fa-check mr-2"></i>Venue capacity matching</li>
+                <li><i className="fas fa-check mr-2"></i>Daily & weekly load limits</li>
                 <li><i className="fas fa-star mr-2"></i>Quality score computation</li>
               </ul>
             </div>
-
-            <button
-              onClick={() => generateMutation.mutate()}
-              disabled={!selectedSession || !selectedSemester || generateMutation.isPending}
-              className="btn btn-primary w-full py-3 text-base gap-2"
-            >
-              {generateMutation.isPending ? (
-                <><i className="fas fa-spinner fa-spin"></i> Generating (AI solving)...</>
-              ) : (
-                <><i className="fas fa-magic"></i> Generate Timetable</>
-              )}
+            <button onClick={handleGenerate} disabled={!selectedSession||!selectedSemester||generating} className="btn btn-primary w-full py-3 text-base gap-2">
+              {generating ? <><i className="fas fa-spinner fa-spin"></i> Generating...</> : <><i className="fas fa-magic"></i> Generate Timetable</>}
             </button>
           </div>
-
           {result && (
             <div className="card p-6 mt-4 space-y-4">
               <div className="flex items-center gap-3">
@@ -1034,11 +972,11 @@
               <div className="grid grid-cols-3 gap-4 text-center">
                 <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-3">
                   <p className={`text-3xl font-bold ${qualityColor}`}>{result.quality_score}</p>
-                  <p className="text-xs text-gray-500 mt-1">Quality Score / 100</p>
+                  <p className="text-xs text-gray-500 mt-1">Quality / 100</p>
                 </div>
                 <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-3">
                   <p className="text-3xl font-bold text-blue-600">#{result.generation_id}</p>
-                  <p className="text-xs text-gray-500 mt-1">Generation ID</p>
+                  <p className="text-xs text-gray-500 mt-1">Gen ID</p>
                 </div>
                 <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-3">
                   <span className="badge badge-warning text-sm capitalize">{result.status}</span>
@@ -1054,48 +992,44 @@
       );
     }
 
-    // ---------- Timetable View & Editor ----------
+    // ── Timetable View ────────────────────────────────────────────────────────
     function TimetableViewPage() {
       const fetchWithAuth = useAuthApi();
       const { addToast } = useToast();
       const user = useStore(state => state.user);
+      const token = useStore(state => state.token);
       const [selectedGen, setSelectedGen] = useState('');
-      const qc = useQueryClient();
+      const qc = useQueryClient ? useQueryClient() : null;
 
-      const { data: generations = [] } = useQuery({ queryKey: ['generations'], queryFn: () => fetchWithAuth('/timetable/generations') });
-      const { data: slots = [], isLoading: slotsLoading, refetch: refetchSlots } = useQuery({
-        queryKey: ['timetable-slots', selectedGen],
-        queryFn: () => fetchWithAuth(`/timetable/slots?generation_id=${selectedGen}`),
-        enabled: !!selectedGen
-      });
-
-      const updateSlotMutation = useMutation({
-        mutationFn: ({ id, payload }) => fetchWithAuth(`/timetable/slots/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
-        onSuccess: () => { addToast('Slot moved', 'success'); refetchSlots(); }
-      });
-
-      const approveMutation = useMutation({
-        mutationFn: (genId) => fetchWithAuth(`/timetable/approve/${genId}`, { method: 'PUT' }),
-        onSuccess: () => { addToast('Timetable approved!', 'success'); qc.invalidateQueries(['generations']); }
-      });
+      const { data:generations=[] } = useQuery ? useQuery({ queryKey:['generations'], queryFn:() => fetchWithAuth('/timetable/generations') }) : { data:[] };
+      const { data:slots=[], isLoading:slotsLoading, refetch:refetchSlots } = useQuery
+        ? useQuery({ queryKey:['slots',selectedGen], queryFn:() => fetchWithAuth(`/timetable/slots?generation_id=${selectedGen}`), enabled:!!selectedGen })
+        : { data:[], isLoading:false, refetch:()=>{} };
 
       const handleDragStart = (e, slotId) => e.dataTransfer.setData('text/plain', String(slotId));
-      const handleDrop = (e, targetDay, targetPeriod) => {
+      const handleDrop = async (e, targetDay, targetPeriod) => {
         e.preventDefault();
         const slotId = e.dataTransfer.getData('text/plain');
-        if (slotId) updateSlotMutation.mutate({ id: slotId, payload: { day: targetDay, period: targetPeriod } });
+        if (!slotId) return;
+        try {
+          await fetchWithAuth(`/timetable/slots/${slotId}`, { method:'PUT', body: JSON.stringify({ day:targetDay, period:targetPeriod }) });
+          addToast('Slot moved', 'success');
+          refetchSlots();
+        } catch(err) { addToast(err.message, 'error'); }
       };
 
-      const openExport = (type) => {
-        const token = useStore.getState().token;
-        window.open(`${API_BASE}/timetable/export/${type}/${selectedGen}?token=${token}`);
+      const handleApprove = async () => {
+        try {
+          await fetchWithAuth(`/timetable/approve/${selectedGen}`, { method:'PUT' });
+          addToast('Timetable approved!', 'success');
+          qc?.invalidateQueries(['generations']);
+        } catch(err) { addToast(err.message, 'error'); }
       };
 
-      const periods = [...new Set(slots.map(s => s.period))].sort((a, b) => a - b);
-      const selectedGenObj = generations.find(g => String(g.id) === String(selectedGen));
-
-      const PERIOD_TIMES = { 1:'8:00', 2:'9:00', 3:'10:00', 4:'11:00', 5:'12:00', 6:'13:00', 7:'14:00', 8:'15:00' };
-      const SLOT_COLORS = ['bg-blue-100 dark:bg-blue-900/40 border-blue-300', 'bg-green-100 dark:bg-green-900/40 border-green-300', 'bg-yellow-100 dark:bg-yellow-900/40 border-yellow-300', 'bg-purple-100 dark:bg-purple-900/40 border-purple-300', 'bg-pink-100 dark:bg-pink-900/40 border-pink-300'];
+      const periods = [...new Set(slots.map(s => s.period))].sort((a,b) => a-b);
+      const selectedGenObj = generations.find(g => String(g.id)===String(selectedGen));
+      const PERIOD_TIMES = {1:'8:00',2:'9:00',3:'10:00',4:'11:00',5:'12:00',6:'13:00',7:'14:00',8:'15:00'};
+      const SLOT_COLORS = ['bg-blue-100 dark:bg-blue-900/40 border-blue-300','bg-green-100 dark:bg-green-900/40 border-green-300','bg-yellow-100 dark:bg-yellow-900/40 border-yellow-300','bg-purple-100 dark:bg-purple-900/40 border-purple-300','bg-pink-100 dark:bg-pink-900/40 border-pink-300'];
 
       return (
         <div>
@@ -1104,10 +1038,8 @@
               <h1 className="text-2xl font-bold">Timetable View</h1>
               {selectedGenObj && (
                 <p className="text-sm text-gray-500">
-                  Gen #{selectedGenObj.id} &nbsp;·&nbsp;
-                  Quality: <span className={selectedGenObj.quality_score >= 80 ? 'text-green-600 font-semibold' : 'text-yellow-600 font-semibold'}>{selectedGenObj.quality_score}/100</span>
-                  &nbsp;·&nbsp;
-                  <span className={`badge ${selectedGenObj.status === 'approved' ? 'badge-success' : 'badge-warning'}`}>{selectedGenObj.status}</span>
+                  Gen #{selectedGenObj.id} · Quality: <span className={selectedGenObj.quality_score>=80?'text-green-600 font-semibold':'text-yellow-600 font-semibold'}>{selectedGenObj.quality_score}/100</span>
+                  &nbsp;·&nbsp;<span className={`badge ${selectedGenObj.status==='approved'?'badge-success':'badge-warning'}`}>{selectedGenObj.status}</span>
                 </p>
               )}
             </div>
@@ -1116,19 +1048,14 @@
                 <option value="">Select generation...</option>
                 {generations.map(g => <option key={g.id} value={g.id}>Gen #{g.id} – {g.status} ({g.quality_score})</option>)}
               </select>
-              {selectedGen && (
-                <>
-                  <button onClick={() => window.open(`${API_BASE}/timetable/export/pdf/${selectedGen}`, '_blank')} className="btn btn-secondary text-sm gap-1"><i className="fas fa-file-pdf text-red-500"></i>PDF</button>
-                  <button onClick={() => window.open(`${API_BASE}/timetable/export/excel/${selectedGen}`, '_blank')} className="btn btn-secondary text-sm gap-1"><i className="fas fa-file-excel text-green-500"></i>Excel</button>
-                  <button onClick={() => window.open(`${API_BASE}/timetable/export/csv/${selectedGen}`, '_blank')} className="btn btn-secondary text-sm gap-1"><i className="fas fa-file-csv text-blue-500"></i>CSV</button>
-                  <button onClick={() => window.open(`${API_BASE}/timetable/export/image/${selectedGen}`, '_blank')} className="btn btn-secondary text-sm gap-1"><i className="fas fa-image text-purple-500"></i>Image</button>
-                  {['institution_admin', 'hod'].includes(user?.role) && selectedGenObj?.status === 'draft' && (
-                    <button onClick={() => approveMutation.mutate(Number(selectedGen))} className="btn btn-success text-sm gap-1" disabled={approveMutation.isPending}>
-                      <i className="fas fa-check"></i> Approve
-                    </button>
-                  )}
-                </>
-              )}
+              {selectedGen && <>
+                <button onClick={() => window.open(`${API_BASE}/timetable/export/pdf/${selectedGen}`, '_blank')} className="btn btn-secondary text-sm gap-1"><i className="fas fa-file-pdf text-red-500"></i>PDF</button>
+                <button onClick={() => window.open(`${API_BASE}/timetable/export/excel/${selectedGen}`, '_blank')} className="btn btn-secondary text-sm gap-1"><i className="fas fa-file-excel text-green-500"></i>Excel</button>
+                <button onClick={() => window.open(`${API_BASE}/timetable/export/csv/${selectedGen}`, '_blank')} className="btn btn-secondary text-sm gap-1"><i className="fas fa-file-csv text-blue-500"></i>CSV</button>
+                {['institution_admin','hod'].includes(user?.role) && selectedGenObj?.status==='draft' && (
+                  <button onClick={handleApprove} className="btn btn-success text-sm gap-1"><i className="fas fa-check"></i> Approve</button>
+                )}
+              </>}
             </div>
           </div>
 
@@ -1136,85 +1063,66 @@
             <div className="card p-12 text-center text-gray-400">
               <i className="fas fa-table text-5xl mb-4"></i>
               <p className="text-lg font-semibold">Select a generation to view the timetable</p>
-              <p className="text-sm mt-1">Generate a new timetable or select an existing one above</p>
             </div>
           )}
-
           {slotsLoading && <div className="text-center py-12"><i className="fas fa-spinner fa-spin text-3xl text-blue-500"></i></div>}
-
-          {selectedGen && !slotsLoading && slots.length === 0 && (
-            <div className="card p-12 text-center text-gray-400">
-              <i className="fas fa-inbox text-5xl mb-4"></i>
-              <p>No timetable slots found for this generation.</p>
-            </div>
+          {selectedGen && !slotsLoading && slots.length===0 && (
+            <div className="card p-12 text-center text-gray-400"><i className="fas fa-inbox text-5xl mb-4"></i><p>No slots found.</p></div>
           )}
-
           {slots.length > 0 && (
-            <>
-              <div className="mb-3 text-xs text-gray-500 flex items-center gap-2">
-                <i className="fas fa-arrows-alt"></i>
-                <span>Drag and drop slots to reschedule (admin only)</span>
-              </div>
-              <div className="overflow-x-auto rounded-xl border dark:border-gray-700">
-                <table className="min-w-full bg-white dark:bg-gray-800 text-sm">
-                  <thead>
-                    <tr className="bg-gray-800 text-white">
-                      <th className="p-3 text-left w-24">Period</th>
-                      {DAYS.map(day => <th key={day} className="p-3 text-center min-w-[140px]">{day}</th>)}
+            <div className="overflow-x-auto rounded-xl border dark:border-gray-700">
+              <table className="min-w-full bg-white dark:bg-gray-800 text-sm">
+                <thead>
+                  <tr className="bg-gray-800 text-white">
+                    <th className="p-3 text-left w-24">Period</th>
+                    {DAYS.map(day => <th key={day} className="p-3 text-center min-w-[140px]">{day}</th>)}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                  {periods.map(period => (
+                    <tr key={period}>
+                      <td className="p-3 font-semibold text-gray-500 text-xs">
+                        <div>P{period}</div>
+                        <div className="text-gray-400">{PERIOD_TIMES[period]||''}</div>
+                      </td>
+                      {DAYS.map((day,di) => {
+                        const slot = slots.find(s => s.day===day && s.period===period);
+                        return (
+                          <td key={day} className="p-2 border-l dark:border-gray-700 h-20 align-top"
+                            onDragOver={e => e.preventDefault()}
+                            onDrop={e => handleDrop(e, day, period)}>
+                            {slot ? (
+                              <div draggable={user?.role==='institution_admin'} onDragStart={e => handleDragStart(e, slot.id)}
+                                className={`h-full rounded-lg border p-2 text-xs ${SLOT_COLORS[di%SLOT_COLORS.length]} ${user?.role==='institution_admin'?'cursor-move':'cursor-default'}`}>
+                                <div className="font-bold truncate">{slot.course?.code}</div>
+                                <div className="text-gray-600 dark:text-gray-300 truncate">{slot.course?.title}</div>
+                                <div className="text-gray-500 truncate mt-1"><i className="fas fa-map-marker-alt mr-1"></i>{slot.venue?.code}</div>
+                                <div className="text-gray-500 truncate"><i className="fas fa-user mr-1"></i>{slot.lecturer?.name}</div>
+                              </div>
+                            ) : (
+                              <div className="h-full rounded-lg border border-dashed border-gray-200 dark:border-gray-600"></div>
+                            )}
+                          </td>
+                        );
+                      })}
                     </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                    {periods.map(period => (
-                      <tr key={period} className="hover:bg-gray-50 dark:hover:bg-gray-700/30">
-                        <td className="p-3 font-semibold text-gray-500 text-xs">
-                          <div>P{period}</div>
-                          <div className="text-gray-400">{PERIOD_TIMES[period] || ''}</div>
-                        </td>
-                        {DAYS.map((day, dayIdx) => {
-                          const slot = slots.find(s => s.day === day && s.period === period);
-                          return (
-                            <td key={day} className="p-2 border-l dark:border-gray-700 h-20 align-top"
-                              onDragOver={e => e.preventDefault()}
-                              onDrop={e => handleDrop(e, day, period)}>
-                              {slot ? (
-                                <div
-                                  draggable={user?.role === 'institution_admin'}
-                                  onDragStart={e => handleDragStart(e, slot.id)}
-                                  className={`h-full rounded-lg border p-2 text-xs ${SLOT_COLORS[dayIdx % SLOT_COLORS.length]} ${user?.role === 'institution_admin' ? 'cursor-move' : 'cursor-default'}`}
-                                >
-                                  <div className="font-bold truncate">{slot.course?.code}</div>
-                                  <div className="text-gray-600 dark:text-gray-300 truncate">{slot.course?.title}</div>
-                                  <div className="text-gray-500 truncate mt-1"><i className="fas fa-map-marker-alt mr-1"></i>{slot.venue?.code}</div>
-                                  <div className="text-gray-500 truncate"><i className="fas fa-user mr-1"></i>{slot.lecturer?.name}</div>
-                                </div>
-                              ) : (
-                                <div className="h-full rounded-lg border border-dashed border-gray-200 dark:border-gray-600"></div>
-                              )}
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       );
     }
 
-    // ---------- Conflicts Page ----------
+    // ── Conflicts Page ────────────────────────────────────────────────────────
     function ConflictsPage() {
       const fetchWithAuth = useAuthApi();
-      const { data: generations = [] } = useQuery({ queryKey: ['generations'], queryFn: () => fetchWithAuth('/timetable/generations') });
       const [selectedGen, setSelectedGen] = useState('');
-
-      const { data: conflicts = [], isLoading } = useQuery({
-        queryKey: ['conflicts', selectedGen],
-        queryFn: () => fetchWithAuth(`/timetable/conflicts/${selectedGen}`),
-        enabled: !!selectedGen
-      });
+      const { data:generations=[] } = useQuery ? useQuery({ queryKey:['generations'], queryFn:() => fetchWithAuth('/timetable/generations') }) : { data:[] };
+      const { data:conflicts=[], isLoading } = useQuery
+        ? useQuery({ queryKey:['conflicts',selectedGen], queryFn:() => fetchWithAuth(`/timetable/conflicts/${selectedGen}`), enabled:!!selectedGen })
+        : { data:[], isLoading:false };
 
       return (
         <div>
@@ -1222,66 +1130,57 @@
             <h1 className="text-2xl font-bold">Conflict Detection</h1>
             <p className="text-sm text-gray-500">Smart conflict analysis across lecturer, venue, and student dimensions</p>
           </div>
-          <div className="card p-4 mb-4 flex gap-3 items-center">
+          <div className="card p-4 mb-4">
             <select value={selectedGen} onChange={e => setSelectedGen(e.target.value)} className="input max-w-xs">
               <option value="">Select generation...</option>
               {generations.map(g => <option key={g.id} value={g.id}>Gen #{g.id} – {g.status}</option>)}
             </select>
           </div>
-
           {selectedGen && !isLoading && (
             <div className="space-y-3">
-              {conflicts.length === 0 ? (
+              {conflicts.length===0 ? (
                 <div className="card p-8 text-center text-green-600">
                   <i className="fas fa-check-circle text-5xl mb-3"></i>
                   <p className="text-xl font-semibold">No conflicts detected!</p>
-                  <p className="text-sm text-gray-500 mt-1">This timetable is conflict-free.</p>
                 </div>
-              ) : (
-                <>
-                  <div className="card p-4 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800">
-                    <p className="font-semibold text-red-700 dark:text-red-400"><i className="fas fa-exclamation-triangle mr-2"></i>{conflicts.length} conflict{conflicts.length !== 1 ? 's' : ''} detected</p>
-                  </div>
-                  {conflicts.map((c, i) => (
-                    <div key={i} className="card p-4 border-l-4 border-red-500">
-                      <div className="flex items-start gap-3">
-                        <span className={`badge ${c.type === 'lecturer_clash' ? 'badge-danger' : c.type === 'venue_clash' ? 'badge-warning' : 'badge-info'}`}>
-                          {c.type?.replace('_', ' ')}
-                        </span>
-                        <div>
-                          <p className="text-sm font-medium">{c.detail}</p>
-                          <p className="text-xs text-gray-500 mt-1">Slots: #{c.slot1_id} and #{c.slot2_id}</p>
-                        </div>
-                      </div>
+              ) : conflicts.map((c,i) => (
+                <div key={i} className="card p-4 border-l-4 border-red-500">
+                  <div className="flex items-start gap-3">
+                    <span className={`badge ${c.type==='lecturer_clash'?'badge-danger':c.type==='venue_clash'?'badge-warning':'badge-info'}`}>{c.type?.replace('_',' ')}</span>
+                    <div>
+                      <p className="text-sm font-medium">{c.detail}</p>
+                      <p className="text-xs text-gray-500 mt-1">Slots: #{c.slot1_id} and #{c.slot2_id}</p>
                     </div>
-                  ))}
-                </>
-              )}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
       );
     }
 
-    // ---------- Notifications Page ----------
+    // ── Notifications Page ────────────────────────────────────────────────────
     function NotificationsPage() {
       const fetchWithAuth = useAuthApi();
-      const qc = useQueryClient();
-      const { data: notifications = [], isLoading } = useQuery({
-        queryKey: ['notifications-all'],
-        queryFn: () => fetchWithAuth('/notifications').catch(() => [])
-      });
+      const qc = useQueryClient ? useQueryClient() : null;
+      const { data:notifications=[], isLoading } = useQuery
+        ? useQuery({ queryKey:['notifications-all'], queryFn:() => fetchWithAuth('/notifications').catch(()=>[]) })
+        : { data:[], isLoading:false };
 
-      const markReadMutation = useMutation({
-        mutationFn: (id) => fetchWithAuth(`/notifications/${id}/read`, { method: 'PUT' }),
-        onSuccess: () => { qc.invalidateQueries(['notifications']); qc.invalidateQueries(['notifications-all']); }
-      });
+      const markRead = async (id) => {
+        try {
+          await fetchWithAuth(`/notifications/${id}/read`, { method:'PUT' });
+          qc?.invalidateQueries(['notifications']);
+          qc?.invalidateQueries(['notifications-all']);
+        } catch(e) {}
+      };
 
       return (
         <div>
           <h1 className="text-2xl font-bold mb-6">Notifications</h1>
-          {isLoading ? <div className="text-center py-8"><i className="fas fa-spinner fa-spin text-3xl text-blue-500"></i></div> :
-            notifications.length === 0 ? (
+          {isLoading ? <div className="text-center py-8"><i className="fas fa-spinner fa-spin text-3xl text-blue-500"></i></div>
+            : notifications.length===0 ? (
               <div className="card p-12 text-center text-gray-400">
                 <i className="fas fa-bell-slash text-5xl mb-4"></i>
                 <p className="text-lg">No notifications yet</p>
@@ -1289,15 +1188,13 @@
             ) : (
               <div className="space-y-2">
                 {notifications.map(n => (
-                  <div key={n.id} className={`card p-4 flex items-start gap-3 ${!n.is_read ? 'border-l-4 border-blue-500 bg-blue-50 dark:bg-blue-900/10' : ''}`}>
-                    <i className={`fas ${!n.is_read ? 'fa-circle text-blue-500' : 'fa-circle text-gray-300'} text-xs mt-1.5`}></i>
+                  <div key={n.id} className={`card p-4 flex items-start gap-3 ${!n.is_read?'border-l-4 border-blue-500 bg-blue-50 dark:bg-blue-900/10':''}`}>
+                    <i className={`fas fa-circle text-xs mt-1.5 ${!n.is_read?'text-blue-500':'text-gray-300'}`}></i>
                     <div className="flex-1">
                       <p className="text-sm">{n.message}</p>
                       <span className="text-xs text-gray-400">{new Date(n.created_at).toLocaleString()}</span>
                     </div>
-                    {!n.is_read && (
-                      <button onClick={() => markReadMutation.mutate(n.id)} className="text-xs text-blue-600 hover:underline flex-shrink-0">Mark read</button>
-                    )}
+                    {!n.is_read && <button onClick={() => markRead(n.id)} className="text-xs text-blue-600 hover:underline">Mark read</button>}
                   </div>
                 ))}
               </div>
@@ -1307,39 +1204,30 @@
       );
     }
 
-    // ---------- Audit Logs ----------
+    // ── Audit Logs ────────────────────────────────────────────────────────────
     function AuditLogsPage() {
       const fetchWithAuth = useAuthApi();
-      const { data = [], isLoading } = useQuery({
-        queryKey: ['audit-logs'],
-        queryFn: () => fetchWithAuth('/audit-logs').catch(() => [])
-      });
-
+      const { data=[], isLoading } = useQuery
+        ? useQuery({ queryKey:['audit-logs'], queryFn:() => fetchWithAuth('/audit-logs').catch(()=>[]) })
+        : { data:[], isLoading:false };
       return (
         <div>
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold">Audit Logs</h1>
-            <p className="text-sm text-gray-500">Complete activity history</p>
-          </div>
+          <div className="mb-6"><h1 className="text-2xl font-bold">Audit Logs</h1><p className="text-sm text-gray-500">Complete activity history</p></div>
           <div className="card p-4">
-            <DataTable
-              columns={[
-                { header: '#', accessor: 'id' },
-                { header: 'User', accessor: 'user' },
-                { header: 'Action', accessor: 'action', render: row => <span className="badge badge-info capitalize">{row.action?.replace('_', ' ')}</span> },
-                { header: 'Details', accessor: 'details' },
-                { header: 'IP', accessor: 'ip_address' },
-                { header: 'Time', accessor: 'timestamp', render: row => new Date(row.timestamp).toLocaleString() }
-              ]}
-              data={data}
-              loading={isLoading}
-            />
+            <DataTable columns={[
+              {header:'#',accessor:'id'},
+              {header:'User',accessor:'user'},
+              {header:'Action',accessor:'action',render:r=><span className="badge badge-info capitalize">{r.action?.replace('_',' ')}</span>},
+              {header:'Details',accessor:'details'},
+              {header:'IP',accessor:'ip_address'},
+              {header:'Time',accessor:'timestamp',render:r=>new Date(r.timestamp).toLocaleString()}
+            ]} data={data} loading={isLoading} />
           </div>
         </div>
       );
     }
 
-    // ---------- Reports Page ----------
+    // ── Reports Page ──────────────────────────────────────────────────────────
     function ReportsPage() {
       const fetchWithAuth = useAuthApi();
       const [reportType, setReportType] = useState('lecturer_workload');
@@ -1349,27 +1237,21 @@
 
       const runReport = async () => {
         setLoading(true);
-        try {
-          const data = await fetchWithAuth(`/reports/${reportType}`);
-          setReportData(data);
-        } catch (err) {
-          addToast(err.message, 'error');
-        } finally { setLoading(false); }
+        try { setReportData(await fetchWithAuth(`/reports/${reportType}`)); }
+        catch(err) { addToast(err.message, 'error'); }
+        finally { setLoading(false); }
       };
 
       const reportOptions = [
-        { value: 'lecturer_workload', label: 'Lecturer Workload', icon: 'fa-chalkboard-teacher' },
-        { value: 'venue_utilization', label: 'Venue Utilization', icon: 'fa-building' },
-        { value: 'course_allocation', label: 'Course Allocation', icon: 'fa-book' },
-        { value: 'conflict', label: 'Conflict Report', icon: 'fa-exclamation-triangle' },
+        {value:'lecturer_workload',label:'Lecturer Workload'},
+        {value:'venue_utilization',label:'Venue Utilization'},
+        {value:'course_allocation',label:'Course Allocation'},
+        {value:'conflict',label:'Conflict Report'},
       ];
 
       return (
         <div>
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold">Reports</h1>
-            <p className="text-sm text-gray-500">Generate analytical reports across your institution</p>
-          </div>
+          <div className="mb-6"><h1 className="text-2xl font-bold">Reports</h1></div>
           <div className="card p-5 mb-5">
             <div className="flex flex-wrap gap-3 items-end">
               <div className="flex-1 min-w-[200px]">
@@ -1379,185 +1261,149 @@
                 </select>
               </div>
               <button onClick={runReport} className="btn btn-primary gap-2" disabled={loading}>
-                {loading ? <><i className="fas fa-spinner fa-spin"></i> Generating...</> : <><i className="fas fa-chart-bar"></i> Generate Report</>}
+                {loading ? <><i className="fas fa-spinner fa-spin"></i> Generating...</> : <><i className="fas fa-chart-bar"></i> Generate</>}
               </button>
             </div>
           </div>
-
-          {reportData && Array.isArray(reportData) && reportData.length > 0 && (
+          {reportData && Array.isArray(reportData) && reportData.length>0 && (
             <div className="card p-4">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="font-semibold">{reportOptions.find(r => r.value === reportType)?.label}</h3>
-                <span className="badge badge-info">{reportData.length} records</span>
-              </div>
               <DataTable
-                columns={Object.keys(reportData[0]).map(k => ({ header: k, accessor: k }))}
-                data={reportData.map((r, i) => ({ id: i, ...r }))}
+                columns={Object.keys(reportData[0]).map(k => ({header:k,accessor:k}))}
+                data={reportData.map((r,i) => ({id:i,...r}))}
               />
-            </div>
-          )}
-          {reportData && Array.isArray(reportData) && reportData.length === 0 && (
-            <div className="card p-8 text-center text-gray-400">
-              <i className="fas fa-inbox text-4xl mb-3"></i>
-              <p>No data available for this report.</p>
             </div>
           )}
         </div>
       );
     }
 
-    // ---------- App ----------
+    // ── App ───────────────────────────────────────────────────────────────────
     function App() {
       const initTheme = useStore(state => state.initTheme);
       useEffect(() => { initTheme(); }, []);
 
-      return (
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-          <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
-          <Route path="/*" element={
-            <ProtectedRoute>
-              <DashboardLayout>
-                <Routes>
-                  <Route path="/dashboard" element={<AnalyticsDashboard />} />
-                  <Route path="/admin/users" element={<EntityPage entityName="User" apiPath="/admin/users" columns={[
-                    { header: 'ID', accessor: 'id' },
-                    { header: 'Email', accessor: 'email' },
-                    { header: 'Name', accessor: 'first_name', render: r => `${r.first_name} ${r.last_name}` },
-                    { header: 'Role', accessor: 'role', render: r => <span className="badge badge-info capitalize">{r.role?.replace('_',' ')}</span> },
-                    { header: 'Verified', accessor: 'is_verified', render: r => <span className={`badge ${r.is_verified ? 'badge-success' : 'badge-danger'}`}>{r.is_verified ? 'Yes' : 'No'}</span> }
-                  ]} formFields={[
-                    { name: 'email', label: 'Email', type: 'email' },
-                    { name: 'first_name', label: 'First Name' },
-                    { name: 'last_name', label: 'Last Name' },
-                    { name: 'role', label: 'Role', type: 'select', options: [
-                      { value: 'super_admin', label: 'Super Admin' },
-                      { value: 'institution_admin', label: 'Institution Admin' },
-                      { value: 'hod', label: 'HOD' },
-                      { value: 'lecturer', label: 'Lecturer' },
-                      { value: 'student', label: 'Student' }
-                    ]},
-                    { name: 'institution_id', label: 'Institution ID', type: 'number', required: false }
-                  ]} />} />
-                  <Route path="/admin/institutions" element={<EntityPage entityName="Institution" apiPath="/admin/institutions" columns={[
-                    { header: 'ID', accessor: 'id' }, { header: 'Name', accessor: 'name' }, { header: 'Code', accessor: 'code' }
-                  ]} formFields={[
-                    { name: 'name', label: 'Name' }, { name: 'code', label: 'Code' },
-                    { name: 'type', label: 'Type', type: 'select', options: [
-                      {value:'university', label:'University'}, {value:'polytechnic', label:'Polytechnic'},
-                      {value:'college', label:'College'}, {value:'secondary', label:'Secondary School'}
-                    ]},
-                    { name: 'address', label: 'Address', type: 'textarea', required: false },
-                    { name: 'logo_url', label: 'Logo URL', required: false }
-                  ]} />} />
-                  <Route path="/faculties" element={<EntityPage entityName="Faculty" apiPath="/institution/faculties" columns={[
-                    { header: 'ID', accessor: 'id' }, { header: 'Name', accessor: 'name' }, { header: 'Code', accessor: 'code' }, { header: 'Institution', accessor: 'institution_id' }
-                  ]} formFields={[
-                    { name: 'name', label: 'Faculty Name' }, { name: 'code', label: 'Code' },
-                    { name: 'institution_id', label: 'Institution ID', type: 'number' }
-                  ]} />} />
-                  <Route path="/departments" element={<EntityPage entityName="Department" apiPath="/institution/departments" columns={[
-                    { header: 'ID', accessor: 'id' }, { header: 'Name', accessor: 'name' }, { header: 'Code', accessor: 'code' }, { header: 'Faculty ID', accessor: 'faculty_id' }
-                  ]} formFields={[
-                    { name: 'name', label: 'Department Name' }, { name: 'code', label: 'Code' },
-                    { name: 'faculty_id', label: 'Faculty ID', type: 'number' },
-                    { name: 'institution_id', label: 'Institution ID', type: 'number' }
-                  ]} />} />
-                  <Route path="/programmes" element={<EntityPage entityName="Programme" apiPath="/institution/programmes" columns={[
-                    { header: 'ID', accessor: 'id' }, { header: 'Name', accessor: 'name' }, { header: 'Code', accessor: 'code' }, { header: 'Dept ID', accessor: 'department_id' }, { header: 'Duration (yrs)', accessor: 'duration_years' }
-                  ]} formFields={[
-                    { name: 'name', label: 'Programme Name' }, { name: 'code', label: 'Code' },
-                    { name: 'department_id', label: 'Department ID', type: 'number' },
-                    { name: 'duration_years', label: 'Duration (Years)', type: 'number' }
-                  ]} />} />
-                  <Route path="/sessions" element={<EntityPage entityName="Session" apiPath="/institution/sessions" columns={[
-                    { header: 'ID', accessor: 'id' }, { header: 'Name', accessor: 'name' },
-                    { header: 'Start', accessor: 'start_date' }, { header: 'End', accessor: 'end_date' },
-                    { header: 'Current', accessor: 'is_current', render: r => <span className={`badge ${r.is_current ? 'badge-success' : 'badge-info'}`}>{r.is_current ? 'Yes' : 'No'}</span> }
-                  ]} formFields={[
-                    { name: 'name', label: 'Session Name (e.g. 2024/2025)' },
-                    { name: 'start_date', label: 'Start Date', type: 'date' },
-                    { name: 'end_date', label: 'End Date', type: 'date' },
-                    { name: 'institution_id', label: 'Institution ID', type: 'number' }
-                  ]} />} />
-                  <Route path="/semesters" element={<EntityPage entityName="Semester" apiPath="/institution/semesters" columns={[
-                    { header: 'ID', accessor: 'id' }, { header: 'Name', accessor: 'name' },
-                    { header: 'Session ID', accessor: 'session_id' },
-                    { header: 'Start', accessor: 'start_date' }, { header: 'End', accessor: 'end_date' }
-                  ]} formFields={[
-                    { name: 'name', label: 'Semester Name (e.g. First Semester)' },
-                    { name: 'session_id', label: 'Session ID', type: 'number' },
-                    { name: 'start_date', label: 'Start Date', type: 'date' },
-                    { name: 'end_date', label: 'End Date', type: 'date' }
-                  ]} />} />
-                  <Route path="/courses" element={<EntityPage entityName="Course" apiPath="/institution/courses" columns={[
-                    { header: 'ID', accessor: 'id' }, { header: 'Code', accessor: 'code' }, { header: 'Title', accessor: 'title' },
-                    { header: 'Units', accessor: 'credit_units' }, { header: 'Level', accessor: 'level' },
-                    { header: 'Students', accessor: 'students_count' }
-                  ]} formFields={[
-                    { name: 'code', label: 'Course Code (e.g. CSC301)' },
-                    { name: 'title', label: 'Course Title' },
-                    { name: 'credit_units', label: 'Credit Units', type: 'number' },
-                    { name: 'level', label: 'Level (e.g. 300)', type: 'number' },
-                    { name: 'department_id', label: 'Department ID', type: 'number' },
-                    { name: 'programme_id', label: 'Programme ID', type: 'number' },
-                    { name: 'semester_id', label: 'Semester ID', type: 'number' },
-                    { name: 'lecturer_id', label: 'Lecturer ID', type: 'number', required: false },
-                    { name: 'students_count', label: 'Students Count', type: 'number' }
-                  ]} />} />
-                  <Route path="/lecturers" element={<EntityPage entityName="Lecturer" apiPath="/institution/lecturers" columns={[
-                    { header: 'ID', accessor: 'id' }, { header: 'Staff ID', accessor: 'staff_id' },
-                    { header: 'Name', accessor: 'name' }, { header: 'Rank', accessor: 'rank' },
-                    { header: 'Dept ID', accessor: 'department_id' },
-                    { header: 'Max Weekly', accessor: 'max_weekly_hours' }
-                  ]} formFields={[
-                    { name: 'staff_id', label: 'Staff ID' },
-                    { name: 'user_id', label: 'User ID (existing user)', type: 'number' },
-                    { name: 'department_id', label: 'Department ID', type: 'number' },
-                    { name: 'rank', label: 'Rank (e.g. Senior Lecturer)', required: false },
-                    { name: 'max_daily_hours', label: 'Max Daily Hours', type: 'number' },
-                    { name: 'max_weekly_hours', label: 'Max Weekly Hours', type: 'number' }
-                  ]} />} />
-                  <Route path="/venues" element={<EntityPage entityName="Venue" apiPath="/institution/venues" columns={[
-                    { header: 'ID', accessor: 'id' }, { header: 'Code', accessor: 'code' },
-                    { header: 'Name', accessor: 'name' }, { header: 'Capacity', accessor: 'capacity' },
-                    { header: 'Building', accessor: 'building' }
-                  ]} formFields={[
-                    { name: 'code', label: 'Venue Code (e.g. LH1)' },
-                    { name: 'name', label: 'Venue Name' },
-                    { name: 'capacity', label: 'Capacity', type: 'number' },
-                    { name: 'building', label: 'Building', required: false },
-                    { name: 'resources', label: 'Resources (e.g. Projector, Lab)', required: false },
-                    { name: 'institution_id', label: 'Institution ID', type: 'number' }
-                  ]} />} />
-                  <Route path="/timetable/generate" element={<TimetableGeneratorPage />} />
-                  <Route path="/timetable/view" element={<TimetableViewPage />} />
-                  <Route path="/conflicts" element={<ConflictsPage />} />
-                  <Route path="/notifications" element={<NotificationsPage />} />
-                  <Route path="/audit-logs" element={<AuditLogsPage />} />
-                  <Route path="/reports" element={<ReportsPage />} />
-                  <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                  <Route path="*" element={<Navigate to="/dashboard" replace />} />
-                </Routes>
-              </DashboardLayout>
-            </ProtectedRoute>
-          } />
-        </Routes>
+      // If QueryClient not available, render simple fallback wrapper
+      const content = (
+        <Router>
+          <ToastProvider>
+            <Routes>
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
+              <Route path="/*" element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <Routes>
+                      <Route path="/dashboard" element={<AnalyticsDashboard />} />
+                      <Route path="/admin/users" element={<EntityPage entityName="User" apiPath="/admin/users" columns={[
+                        {header:'ID',accessor:'id'},{header:'Email',accessor:'email'},
+                        {header:'Name',accessor:'first_name',render:r=>`${r.first_name} ${r.last_name}`},
+                        {header:'Role',accessor:'role',render:r=><span className="badge badge-info capitalize">{r.role?.replace('_',' ')}</span>},
+                      ]} formFields={[
+                        {name:'email',label:'Email',type:'email'},
+                        {name:'first_name',label:'First Name'},
+                        {name:'last_name',label:'Last Name'},
+                        {name:'role',label:'Role',type:'select',options:[
+                          {value:'super_admin',label:'Super Admin'},{value:'institution_admin',label:'Institution Admin'},
+                          {value:'hod',label:'HOD'},{value:'lecturer',label:'Lecturer'},{value:'student',label:'Student'}
+                        ]},
+                        {name:'institution_id',label:'Institution ID',type:'number',required:false}
+                      ]} />} />
+                      <Route path="/admin/institutions" element={<EntityPage entityName="Institution" apiPath="/admin/institutions" columns={[
+                        {header:'ID',accessor:'id'},{header:'Name',accessor:'name'},{header:'Code',accessor:'code'}
+                      ]} formFields={[
+                        {name:'name',label:'Name'},{name:'code',label:'Code'},
+                        {name:'type',label:'Type',type:'select',options:[
+                          {value:'university',label:'University'},{value:'polytechnic',label:'Polytechnic'},
+                          {value:'college',label:'College'},{value:'secondary',label:'Secondary School'}
+                        ]},
+                        {name:'address',label:'Address',type:'textarea',required:false},
+                        {name:'logo_url',label:'Logo URL',required:false}
+                      ]} />} />
+                      <Route path="/faculties" element={<EntityPage entityName="Faculty" apiPath="/institution/faculties" columns={[
+                        {header:'ID',accessor:'id'},{header:'Name',accessor:'name'},{header:'Code',accessor:'code'},{header:'Institution',accessor:'institution_id'}
+                      ]} formFields={[
+                        {name:'name',label:'Faculty Name'},{name:'code',label:'Code'},{name:'institution_id',label:'Institution ID',type:'number'}
+                      ]} />} />
+                      <Route path="/departments" element={<EntityPage entityName="Department" apiPath="/institution/departments" columns={[
+                        {header:'ID',accessor:'id'},{header:'Name',accessor:'name'},{header:'Code',accessor:'code'},{header:'Faculty ID',accessor:'faculty_id'}
+                      ]} formFields={[
+                        {name:'name',label:'Department Name'},{name:'code',label:'Code'},
+                        {name:'faculty_id',label:'Faculty ID',type:'number'},{name:'institution_id',label:'Institution ID',type:'number'}
+                      ]} />} />
+                      <Route path="/programmes" element={<EntityPage entityName="Programme" apiPath="/institution/programmes" columns={[
+                        {header:'ID',accessor:'id'},{header:'Name',accessor:'name'},{header:'Code',accessor:'code'},
+                        {header:'Dept ID',accessor:'department_id'},{header:'Duration',accessor:'duration_years'}
+                      ]} formFields={[
+                        {name:'name',label:'Programme Name'},{name:'code',label:'Code'},
+                        {name:'department_id',label:'Department ID',type:'number'},{name:'duration_years',label:'Duration (Years)',type:'number'}
+                      ]} />} />
+                      <Route path="/sessions" element={<EntityPage entityName="Session" apiPath="/institution/sessions" columns={[
+                        {header:'ID',accessor:'id'},{header:'Name',accessor:'name'},{header:'Start',accessor:'start_date'},{header:'End',accessor:'end_date'},
+                        {header:'Current',accessor:'is_current',render:r=><span className={`badge ${r.is_current?'badge-success':'badge-info'}`}>{r.is_current?'Yes':'No'}</span>}
+                      ]} formFields={[
+                        {name:'name',label:'Session Name (e.g. 2024/2025)'},
+                        {name:'start_date',label:'Start Date',type:'date'},{name:'end_date',label:'End Date',type:'date'},
+                        {name:'institution_id',label:'Institution ID',type:'number'}
+                      ]} />} />
+                      <Route path="/semesters" element={<EntityPage entityName="Semester" apiPath="/institution/semesters" columns={[
+                        {header:'ID',accessor:'id'},{header:'Name',accessor:'name'},{header:'Session ID',accessor:'session_id'},
+                        {header:'Start',accessor:'start_date'},{header:'End',accessor:'end_date'}
+                      ]} formFields={[
+                        {name:'name',label:'Semester Name'},{name:'session_id',label:'Session ID',type:'number'},
+                        {name:'start_date',label:'Start Date',type:'date'},{name:'end_date',label:'End Date',type:'date'}
+                      ]} />} />
+                      <Route path="/courses" element={<EntityPage entityName="Course" apiPath="/institution/courses" columns={[
+                        {header:'ID',accessor:'id'},{header:'Code',accessor:'code'},{header:'Title',accessor:'title'},
+                        {header:'Units',accessor:'credit_units'},{header:'Level',accessor:'level'},{header:'Students',accessor:'students_count'}
+                      ]} formFields={[
+                        {name:'code',label:'Course Code'},{name:'title',label:'Course Title'},
+                        {name:'credit_units',label:'Credit Units',type:'number'},{name:'level',label:'Level',type:'number'},
+                        {name:'department_id',label:'Department ID',type:'number'},{name:'programme_id',label:'Programme ID',type:'number'},
+                        {name:'semester_id',label:'Semester ID',type:'number'},{name:'lecturer_id',label:'Lecturer ID',type:'number',required:false},
+                        {name:'students_count',label:'Students Count',type:'number'}
+                      ]} />} />
+                      <Route path="/lecturers" element={<EntityPage entityName="Lecturer" apiPath="/institution/lecturers" columns={[
+                        {header:'ID',accessor:'id'},{header:'Staff ID',accessor:'staff_id'},{header:'Name',accessor:'name'},
+                        {header:'Rank',accessor:'rank'},{header:'Dept ID',accessor:'department_id'},{header:'Max Weekly',accessor:'max_weekly_hours'}
+                      ]} formFields={[
+                        {name:'staff_id',label:'Staff ID'},{name:'user_id',label:'User ID',type:'number'},
+                        {name:'department_id',label:'Department ID',type:'number'},{name:'rank',label:'Rank',required:false},
+                        {name:'max_daily_hours',label:'Max Daily Hours',type:'number'},{name:'max_weekly_hours',label:'Max Weekly Hours',type:'number'}
+                      ]} />} />
+                      <Route path="/venues" element={<EntityPage entityName="Venue" apiPath="/institution/venues" columns={[
+                        {header:'ID',accessor:'id'},{header:'Code',accessor:'code'},{header:'Name',accessor:'name'},
+                        {header:'Capacity',accessor:'capacity'},{header:'Building',accessor:'building'}
+                      ]} formFields={[
+                        {name:'code',label:'Venue Code'},{name:'name',label:'Venue Name'},
+                        {name:'capacity',label:'Capacity',type:'number'},{name:'building',label:'Building',required:false},
+                        {name:'resources',label:'Resources',required:false},{name:'institution_id',label:'Institution ID',type:'number'}
+                      ]} />} />
+                      <Route path="/timetable/generate" element={<TimetableGeneratorPage />} />
+                      <Route path="/timetable/view" element={<TimetableViewPage />} />
+                      <Route path="/conflicts" element={<ConflictsPage />} />
+                      <Route path="/notifications" element={<NotificationsPage />} />
+                      <Route path="/audit-logs" element={<AuditLogsPage />} />
+                      <Route path="/reports" element={<ReportsPage />} />
+                      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                    </Routes>
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
+            </Routes>
+          </ToastProvider>
+        </Router>
       );
+
+      if (queryClient) {
+        return <QueryClientProvider client={queryClient}>{content}</QueryClientProvider>;
+      }
+      return content;
     }
 
-    const root = createRoot(document.getElementById('root'));
-    root.render(
-      <Router>
-        <QueryClientProvider client={queryClient}>
-          <ToastProvider>
-            <App />
-          </ToastProvider>
-        </QueryClientProvider>
-      </Router>
-    );
+    createRoot(document.getElementById('root')).render(<App />);
   </script>
 </body>
 </html>
